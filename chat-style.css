@@ -1,0 +1,264 @@
+/* --- chat-style.css (VERSÃO FINAL: CORREÇÃO ANDROID/iOS) --- */
+
+/* 1. VARIÁVEIS GERAIS */
+:root {
+    --bg-dark: #0b0e14;
+    --neon-blue: #00f3ff;
+    --neon-purple: #bc13fe;
+    --text-main: #ffffff;
+    --text-muted: #a0aec0;
+    --border-color: rgba(0, 243, 255, 0.3);
+    --glass-bg: rgba(21, 26, 35, 0.95);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    /* Altura total fixa para impedir o "salto" da página */
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Impede scroll na página inteira (apenas no chat) */
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    
+    /* Layout Flex para fixar o header no topo e input no fundo */
+    display: flex; 
+    flex-direction: column;
+    
+    /* Altura dinâmica real (Android/iOS) */
+    min-height: 100dvh; 
+}
+
+/* 2. ESTRUTURA BÁSICA */
+#particleCanvas { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    z-index: 0; pointer-events: none; 
+}
+
+.hud-header {
+    height: 70px; flex-shrink: 0; /* Altura fixa, não encolhe */
+    background: rgba(11, 14, 20, 0.95);
+    border-bottom: 1px solid var(--border-color);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 30px; z-index: 10; backdrop-filter: blur(10px);
+}
+.brand-logo { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #fff; }
+.brand-logo span { color: var(--neon-blue); }
+.user-status { display: flex; align-items: center; gap: 20px; font-family: 'Rajdhani', sans-serif; font-weight: 600; }
+.user-name { color: var(--neon-blue); }
+
+.btn-logout {
+    background: transparent; border: 1px solid #ff4444; color: #ff4444; 
+    padding: 5px 15px; cursor: pointer;
+    font-family: 'Orbitron', sans-serif; 
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.terminal-container {
+    /* Ocupa todo o espaço entre o header e o input */
+    flex: 1; 
+    display: flex; flex-direction: column; 
+    min-height: 0; /* CRUCIAL: Permite que o scroll funcione dentro do flex item */
+    
+    max-width: 1000px; width: 95%; margin: 20px auto;
+    background: var(--glass-bg); border: 1px solid var(--border-color);
+    position: relative; z-index: 10; 
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.05);
+}
+
+/* Cantos decorativos */
+.terminal-container::before { content: ''; position: absolute; top: 0; left: 0; width: 20px; height: 20px; border-top: 2px solid var(--neon-blue); border-left: 2px solid var(--neon-blue); }
+.terminal-container::after { content: ''; position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; border-bottom: 2px solid var(--neon-blue); border-right: 2px solid var(--neon-blue); }
+
+#tella-chat-log { 
+    flex: 1; /* Ocupa o espaço disponível */
+    overflow-y: auto; /* Scroll apenas aqui */
+    padding: 20px; 
+    display: flex; flex-direction: column; gap: 15px; 
+    
+    /* Scroll suave no iOS */
+    -webkit-overflow-scrolling: touch; 
+}
+
+/* Scrollbar Customizada */
+#tella-chat-log::-webkit-scrollbar { width: 6px; }
+#tella-chat-log::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+#tella-chat-log::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+/* 3. MENSAGENS */
+.tella-message { 
+    max-width: 100%; padding: 10px 20px; 
+    font-size: 0.95rem; line-height: 1.6; 
+    animation: fadeIn 0.3s ease; 
+}
+
+/* USUÁRIO */
+.tella-user {
+    align-self: flex-end; 
+    background: rgba(0, 243, 255, 0.05);
+    border-right: 2px solid var(--neon-blue); color: #fff;
+    border-radius: 10px 10px 0 10px; text-align: right;
+}
+
+/* SISTEMA */
+.tella-system { 
+    text-align: center; color: #a0aec0; font-size: 0.8rem; margin: 10px 0; 
+    font-family: 'Rajdhani', sans-serif; flex-shrink: 0; 
+}
+
+/* BOT (IA) */
+.tella-bot {
+    align-self: flex-start; width: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 4px solid var(--neon-blue);
+    color: #e0e0e0; border-radius: 0 10px 10px 10px;
+    padding: 0;
+}
+.tella-bot > strong:first-child {
+    display: block; padding: 15px 20px 5px 20px;
+    color: var(--neon-blue); font-family: 'Orbitron', sans-serif; letter-spacing: 1px;
+}
+
+/* 4. FORMATAÇÃO DO CONTEÚDO DA IA */
+.tella-bot h3 {
+    color: #00f3ff !important;
+    font-family: 'Orbitron', sans-serif; font-size: 1.3em; font-weight: 800;
+    margin: 25px 0 15px 0; padding: 0 20px;
+    border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+    line-height: 1.3;
+}
+.tella-bot h4 {
+    color: #00f3ff !important;
+    display: block; width: 100%;
+    margin-top: 30px; margin-bottom: 10px;
+    font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.1em;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, rgba(0, 243, 255, 0.15), transparent);
+    border-left: 3px solid #00f3ff;
+    padding: 8px 20px;
+}
+
+.tella-bot p { 
+    margin-bottom: 12px; padding: 0 20px; 
+    color: #cfd8dc; text-align: left; 
+}
+
+/* --- ESTILO DE LISTAS (IA) --- */
+.tella-bot ul {
+    margin: 15px 0;
+    padding: 0 20px; /* Padding no container da lista */
+    list-style: none;
+}
+
+.tella-bot li {
+    position: relative;
+    padding-left: 20px; /* Espaço entre a seta e o texto */
+    margin-bottom: 10px;
+    color: #fff;
+    line-height: 1.5;
+    text-align: left;
+}
+
+/* Seta Neon da Lista */
+.tella-bot li::before {
+    content: '>'; 
+    position: absolute;
+    left: 0;
+    color: var(--neon-blue);
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.tella-bot strong { color: #fff; font-weight: 700; }
+
+/* 5. ÁREA DE COMANDOS (INPUT) */
+.command-area {
+    flex-shrink: 0; /* Garante que não é esmagado */
+    background: rgba(0,0,0,0.95); /* Fundo sólido para tapar conteúdo atrás */
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; gap: 10px; align-items: center;
+    
+    /* CONFIGURAÇÃO DE SEGURANÇA PADRÃO */
+    padding: 15px; 
+    /* Base dinâmica, mas que será sobrescrita no mobile se necessário */
+    padding-bottom: calc(env(safe-area-inset-bottom) + 15px);
+}
+
+.input-wrapper { flex: 1; display: flex; }
+
+#tella-input { 
+    width: 100%; background: rgba(255,255,255,0.05); 
+    border: 1px solid var(--border-color); color: var(--neon-blue); 
+    padding: 15px; outline: none; border-radius: 4px;
+}
+
+.btn-action { height: 50px; border: none; cursor: pointer; font-family: 'Orbitron', sans-serif; font-weight: bold; }
+
+#tella-send { 
+    background: var(--neon-blue); color: #000; padding: 0 25px; 
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); 
+    font-weight: 800;
+}
+#tella-upload, #tella-clear { 
+    background: transparent; border: 1px solid var(--border-color); 
+    color: var(--neon-blue); width: 45px; display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+}
+#tella-file-input { display: none; }
+
+/* --- AJUSTES MOBILE (Responsividade - VERSÃO CORRIGIDA) --- */
+@media (max-width: 768px) {
+    /* 1. Remove margens do container principal para usar 100% da tela */
+    .terminal-container { 
+        width: 100%; 
+        height: 100%; 
+        margin: 0; 
+        border: none; 
+        border-radius: 0; 
+        box-shadow: none; 
+    }
+    
+    .hud-header { padding: 0 15px; height: 60px; }
+    .user-status span { display: none; } 
+    .user-name { font-size: 0.9rem; }
+    .brand-logo { font-size: 1.2rem; }
+    
+    .tella-message { padding: 10px 10px; }
+    .tella-bot > strong:first-child { padding: 15px 15px 5px 15px; }
+    .tella-bot h3, .tella-bot h4, .tella-bot p, .tella-bot ul { padding-left: 15px; padding-right: 15px; }
+    
+    /* 2. CORREÇÃO CRÍTICA DO CORTE NO ANDROID (PWA e Browser) */
+    .command-area {
+        padding: 10px;
+        
+        /* AQUI ESTÁ A SOLUÇÃO: */
+        /* Forçamos 60px de espaço vazio em baixo para 'empurrar' o conteúdo */
+        /* para cima dos botões virtuais (triângulo, bola, quadrado) */
+        padding-bottom: 60px !important; 
+        
+        background-color: var(--bg-dark); 
+        position: relative; 
+        z-index: 999;
+    }
+    
+    /* Input otimizado para toque (evita zoom) */
+    #tella-input { padding: 12px; font-size: 16px; }
+}
+
+/* 3. REFORÇO EXTRA PARA PWA (APLICATIVO INSTALADO) */
+/* Garante que funciona mesmo se o media query anterior falhar */
+@media all and (display-mode: standalone) {
+    .command-area {
+        padding-bottom: 60px !important; 
+    }
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

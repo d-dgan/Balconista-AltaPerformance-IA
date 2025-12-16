@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Balconista IA - Terminal</title>
+
+    <script>
+        if (!localStorage.getItem('balconista_logado')) {
+            window.location.href = '../index.html';
+        }
+    </script>
+    
+    <meta name="theme-color" content="#0b0e14">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" type="image/png" href="../favicon.png"> 
+    <link rel="apple-touch-icon" href="../icon-192.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../chat-style.css">
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="hud-header">
+        <div class="brand-logo">BALCONISTA <span>IA</span></div>
+        <div class="user-status">
+            <span id="displayNome">OPERADOR</span>
+            <button class="btn-logout" id="btnLogout">
+                <i class="fas fa-power-off"></i> SAIR
+            </button>
+        </div>
+    </div>
+
+    <div class="terminal-container">
+        <div id="tella-chat-log">
+            <div class="tella-message tella-bot">
+                <strong>SISTEMA:</strong>
+                <p>Terminal online. Aguardando imagem ou comando...</p>
+            </div>
+        </div>
+
+        <form id="tella-form" class="command-area">
+            <button type="button" id="tella-clear" class="btn-action" title="Limpar"><i class="fas fa-trash"></i></button>
+            <button type="button" id="tella-upload" class="btn-action" title="Anexar Foto"><i class="fas fa-camera"></i></button>
+            <input type="file" id="tella-file-input" accept="image/*" style="display: none;">
+            
+            <div class="input-wrapper">
+                <input type="text" id="tella-input" placeholder="Digite sua dúvida..." autocomplete="off">
+            </div>
+            
+            <button type="submit" id="tella-send" class="btn-action">ENVIAR</button>
+        </form>
+    </div>
+
+    <script src="../chat-script.js"></script>
+
+    <script>
+        // Regista o Service Worker para funcionar como App
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+        }
+
+        // Garante que o botão SAIR funciona mesmo se o script principal demorar a carregar
+        const btnLogout = document.getElementById('btnLogout');
+        if(btnLogout) {
+            btnLogout.addEventListener('click', (e) => {
+                if(!e.defaultPrevented) {
+                    localStorage.removeItem('balconista_logado');
+                    localStorage.removeItem('balconista_nome');
+                    localStorage.removeItem('balconista_email');
+                    window.location.href = '../index.html';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

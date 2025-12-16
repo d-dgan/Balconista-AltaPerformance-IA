@@ -1,0 +1,406 @@
+/* --- style.css CORRIGIDO --- */
+:root {
+    --bg-dark: #0b0e14;
+    --neon-blue: #00f3ff;
+    --neon-purple: #bc13fe;
+    --text-main: #ffffff;
+    --text-muted: #a0aec0;
+    --border-color: rgba(0, 243, 255, 0.2);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    
+    /* --- CORREÇÃO MOBILE 1: Altura Dinâmica --- */
+    /* 100dvh ajusta automaticamente quando a barra do navegador aparece/some */
+    height: 100vh; 
+    height: 100dvh; 
+    
+    /* --- CORREÇÃO MOBILE 2: Área Segura (Safe Area) --- */
+    /* Cria um espaço vazio onde ficam os botões virtuais do Android/iPhone */
+    padding-bottom: env(safe-area-inset-bottom);
+    
+    overflow: hidden;
+    display: flex;
+    position: relative;
+}
+
+/* --- CANVAS INTERATIVO --- */
+#particleCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* --- LAYOUT DIVIDIDO --- */
+.container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 1; 
+}
+
+/* --- LADO ESQUERDO: LOGIN --- */
+.login-section {
+    width: 40%;
+    background: #0b0e14;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem;
+    position: relative;
+    border-right: 1px solid var(--border-color);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+    overflow: hidden; 
+}
+
+/* --- LOGO (CONFIGURAÇÃO PADRÃO - DESKTOP) --- */
+.tella-logo-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%; 
+    max-width: 600px; 
+    opacity: 0.04; 
+    z-index: 0; 
+    pointer-events: none; 
+    filter: grayscale(100%) brightness(200%); 
+    transition: all 0.5s ease;
+}
+
+.brand-title, .brand-subtitle, form, .login-footer {
+    position: relative;
+    z-index: 2;
+}
+
+.brand-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, #fff, var(--neon-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.brand-subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.2rem;
+    color: var(--neon-blue);
+    margin-bottom: 3rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+}
+
+.by-tella {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: 2px;
+    margin-top: 5px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    -webkit-text-fill-color: var(--text-muted); 
+}
+
+.form-group { margin-bottom: 1.5rem; }
+
+label {
+    display: block;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.input-wrapper { position: relative; }
+
+.input-wrapper i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--neon-blue);
+    font-size: 1rem;
+}
+
+input {
+    width: 100%;
+    padding: 15px 15px 15px 45px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    transition: all 0.3s;
+    backdrop-filter: blur(5px); 
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(90deg, var(--neon-blue), #0088ff);
+    border: none;
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 1rem;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+}
+
+.btn-login:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+.error-message {
+    color: #ff4444;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    font-family: 'Rajdhani', sans-serif;
+    display: none;
+    border-left: 3px solid #ff4444;
+    padding-left: 10px;
+}
+
+.login-footer {
+    position: absolute;
+    bottom: 2rem;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'Poppins', sans-serif;
+    opacity: 0.7;
+}
+
+/* --- LADO DIREITO: INFO & IA --- */
+.info-section {
+    width: 60%;
+    background-image: url('robot-ia.jpg'); 
+    background-size: cover;
+    background-position: center top;
+    position: relative;
+    display: flex;
+    align-items: flex-end; 
+}
+
+.info-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, rgba(11, 14, 20, 0.1), rgba(11, 14, 20, 0.95) 80%);
+}
+
+.content-box {
+    position: relative;
+    z-index: 2;
+    padding: 4rem;
+    max-width: 800px;
+    width: 100%;
+}
+
+.scrollable-content {
+    max-height: 60vh; 
+    overflow-y: auto;
+    padding-right: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neon-blue) rgba(255,255,255,0.1);
+}
+
+.scrollable-content::-webkit-scrollbar { width: 6px; }
+.scrollable-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
+.scrollable-content::-webkit-scrollbar-thumb { background-color: var(--neon-blue); border-radius: 10px; }
+
+.info-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    color: #fff;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-title i { color: var(--neon-blue); }
+
+.info-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #ccc;
+    margin-bottom: 1.5rem;
+    text-align: justify;
+}
+
+.feature-box {
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid var(--neon-purple);
+    padding: 15px;
+    margin-bottom: 15px;
+    backdrop-filter: blur(5px);
+}
+
+.feature-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    color: var(--neon-blue);
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.grid-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* --- RESPONSIVIDADE (Mobile) --- */
+@media (max-width: 992px) {
+    body { overflow: auto; display: block; }
+    
+    /* Oculta completamente a parte informativa no celular */
+    .info-section { display: none !important; }
+
+    .container { flex-direction: column; }
+    
+    /* Faz o login ocupar 100% da tela */
+    .login-section { 
+        width: 100%; 
+        min-height: 100dvh; /* Altura corrigida para mobile */
+        padding: 2rem; 
+        justify-content: center; /* Centraliza verticalmente no mobile */
+        padding-top: 4rem; 
+        border-right: none;
+        
+        /* Adiciona espaço extra no final para scroll seguro */
+        padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    }
+    
+    /* Configuração da Logo no Mobile (Visível e no Topo) */
+    .tella-logo-bg {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        width: 160px; 
+        opacity: 1; 
+        margin: 0 auto 2rem auto; 
+        display: block;
+        filter: none; 
+    }
+
+    .login-footer { position: relative; bottom: 0; margin-top: 3rem; }
+}
+
+/* ==========================================================================
+   CORREÇÃO EXTRA PARA A TELA DE CHAT
+   (Caso ela use esse mesmo CSS e tenha o problema dos botões)
+   ========================================================================== */
+   
+/* Se a sua barra de input tiver a classe .chat-input-area ou for um form no rodapé */
+.chat-input-wrapper, 
+.input-area, 
+form[style*="fixed"], 
+.footer-chat { 
+    /* Adiciona margem de segurança + 20px extra para garantir */
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px) !important;
+    background-color: var(--bg-dark); /* Garante que o fundo cubra a área */
+}
+
+/* --- BOTÃO DE INSTALAÇÃO PWA (CORRIGIDO) --- */
+.install-container {
+    width: 100%;
+    margin-bottom: 1.5rem; /* Espaço para não grudar na logo */
+    position: relative;
+    z-index: 10;
+    animation: fadeIn 0.5s ease;
+}
+
+.btn-install-app {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0, 243, 255, 0.05); /* Fundo mais sutil */
+    border: 1px dashed var(--neon-blue); /* Borda tracejada */
+    border-radius: 4px;
+    color: var(--neon-blue);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-install-app:hover {
+    background: var(--neon-blue);
+    color: #000;
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- REGRA DE OURO: ESCONDER NO DESKTOP --- */
+@media (min-width: 993px) {
+    #installContainer {
+        /* O !important impede que o JS mostre o botão no PC */
+        display: none !important; 
+    }
+}
+
+/* Ajuste Mobile específico para o botão */
+@media (max-width: 992px) {
+    .install-container {
+        margin-top: 0;
+        margin-bottom: 2rem;
+    }
+}
