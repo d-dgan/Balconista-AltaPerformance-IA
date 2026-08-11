@@ -1,11 +1,11 @@
 /* --- sw.js --- */
-const CACHE_NAME = 'balconista-v1';
+const CACHE_NAME = 'balconista-v2';
 const ASSETS = [
   '/',
   '/index.html',
   '/style.css',
   '/script.js',
-  '/logo-tella.png',
+  '/logo-tecvancel.png',
   '/icon-192.png',
   '/icon-512.png'
 ];

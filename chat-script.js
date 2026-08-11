@@ -20,7 +20,7 @@ if(btnLogout) {
         localStorage.removeItem('balconista_logado');
         localStorage.removeItem('balconista_nome');
         localStorage.removeItem('balconista_email');
-        localStorage.removeItem('tella_chat_session_id'); 
+        localStorage.removeItem('tecvancel_chat_session_id');
         // AJUSTE: Redireciona para o login corretamente
         window.location.href = '../index.html';
     });
@@ -92,15 +92,15 @@ function animate() {
 animate();
 
 /* --- 4. LÓGICA DO CHATBOT --- */
-const WEBHOOK_URL = "https://tella-n8n.o40vmn.easypanel.host/webhook/74f5eb0b-4919-4bc3-99fb-5d9fce85ff9f/chat"; 
+const WEBHOOK_URL = "https://chat-n8n-main.wcvao0.easypanel.host/webhook/74f5eb0b-4919-4bc3-99fb-5d9fce85ff9f/chat";
 
-const form = document.getElementById("tella-form");
-const input = document.getElementById("tella-input");
-const chatLog = document.getElementById("tella-chat-log");
-const sendBtn = document.getElementById("tella-send");
-const clearBtn = document.getElementById("tella-clear");
-const uploadBtn = document.getElementById("tella-upload");
-const fileInput = document.getElementById("tella-file-input");
+const form = document.getElementById("tecvancel-form");
+const input = document.getElementById("tecvancel-input");
+const chatLog = document.getElementById("tecvancel-chat-log");
+const sendBtn = document.getElementById("tecvancel-send");
+const clearBtn = document.getElementById("tecvancel-clear");
+const uploadBtn = document.getElementById("tecvancel-upload");
+const fileInput = document.getElementById("tecvancel-file-input");
 
 let attachedImageBase64 = null;
 let attachedImageName = null;
@@ -108,10 +108,10 @@ const MAX_IMAGE_SIZE_MB = 5;
 
 function getSessionId() {
     const userEmail = localStorage.getItem('balconista_email') || 'anonimo';
-    let sessionId = localStorage.getItem('tella_chat_session_id');
+    let sessionId = localStorage.getItem('tecvancel_chat_session_id');
     if (!sessionId) {
         sessionId = userEmail + '_' + Date.now().toString(36);
-        localStorage.setItem('tella_chat_session_id', sessionId);
+        localStorage.setItem('tecvancel_chat_session_id', sessionId);
     }
     return sessionId;
 }
@@ -120,7 +120,7 @@ const currentSessionId = getSessionId();
 /* --- FUNÇÕES DE DISPLAY --- */
 function addMessage(text, role) {
     const wrapper = document.createElement("div");
-    wrapper.className = "tella-message tella-" + role;
+    wrapper.className = "tecvancel-message tecvancel-" + role;
     if(role === 'bot') text = "<strong>IA:</strong> " + text;
     wrapper.innerHTML = text;
     chatLog.appendChild(wrapper);
@@ -129,7 +129,7 @@ function addMessage(text, role) {
 
 function addImageMessage(base64Data, role, name) {
     const imgWrapper = document.createElement("div");
-    imgWrapper.className = `tella-message tella-${role} image-message`;
+    imgWrapper.className = `tecvancel-message tecvancel-${role} image-message`;
     const img = document.createElement("img");
     img.src = `data:image/jpeg;base64,${base64Data}`; 
     imgWrapper.appendChild(img);
@@ -139,7 +139,7 @@ function addImageMessage(base64Data, role, name) {
 
 function addSystem(text) {
     const wrapper = document.createElement("div");
-    wrapper.className = "tella-system";
+    wrapper.className = "tecvancel-system";
     wrapper.innerHTML = `<i class="fas fa-microchip"></i> ${text}`;
     chatLog.appendChild(wrapper);
     chatLog.scrollTop = chatLog.scrollHeight;
@@ -148,7 +148,7 @@ function addSystem(text) {
 
 function addWarning(text) {
     const wrapper = document.createElement("div");
-    wrapper.className = "tella-warning"; 
+    wrapper.className = "tecvancel-warning";
     wrapper.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${text}`;
     chatLog.appendChild(wrapper);
     chatLog.scrollTop = chatLog.scrollHeight;
@@ -157,7 +157,7 @@ function addWarning(text) {
 /* --- FUNÇÃO DE DIGITAÇÃO CORRIGIDA (DOM WALKER) --- */
 function typeMessageHTML(html, role) {
     const wrapper = document.createElement("div");
-    wrapper.className = "tella-message tella-" + role;
+    wrapper.className = "tecvancel-message tecvancel-" + role;
     chatLog.appendChild(wrapper);
 
     // Se for usuário, exibe direto
@@ -250,7 +250,7 @@ form.addEventListener("submit", async function (event) {
 
     if (question) {
         const wrapper = document.createElement("div");
-        wrapper.className = "tella-message tella-user";
+        wrapper.className = "tecvancel-message tecvancel-user";
         wrapper.textContent = question;
         chatLog.appendChild(wrapper);
         chatLog.scrollTop = chatLog.scrollHeight;
@@ -306,7 +306,7 @@ clearBtn.addEventListener("click", function () {
     fileInput.value = ""; 
     
     const startMsg = document.createElement("div");
-    startMsg.className = "tella-message tella-bot";
+    startMsg.className = "tecvancel-message tecvancel-bot";
     startMsg.innerHTML = "<strong>SISTEMA:</strong> Terminal limpo.";
     chatLog.appendChild(startMsg);
 });

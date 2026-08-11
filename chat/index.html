@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Balconista IA - Terminal</title>
+    <title>Balconista Pro IA - Terminal</title>
 
     <script>
         if (!localStorage.getItem('balconista_logado')) {
@@ -26,7 +26,7 @@
     <canvas id="particleCanvas"></canvas>
 
     <div class="hud-header">
-        <div class="brand-logo">BALCONISTA <span>IA</span></div>
+        <div class="brand-logo">BALCONISTA <span>PRO IA</span></div>
         <div class="user-status">
             <span id="displayNome">OPERADOR</span>
             <button class="btn-logout" id="btnLogout">
@@ -36,23 +36,23 @@
     </div>
 
     <div class="terminal-container">
-        <div id="tella-chat-log">
-            <div class="tella-message tella-bot">
+        <div id="tecvancel-chat-log">
+            <div class="tecvancel-message tecvancel-bot">
                 <strong>SISTEMA:</strong>
                 <p>Terminal online. Aguardando imagem ou comando...</p>
             </div>
         </div>
 
-        <form id="tella-form" class="command-area">
-            <button type="button" id="tella-clear" class="btn-action" title="Limpar"><i class="fas fa-trash"></i></button>
-            <button type="button" id="tella-upload" class="btn-action" title="Anexar Foto"><i class="fas fa-camera"></i></button>
-            <input type="file" id="tella-file-input" accept="image/*" style="display: none;">
-            
+        <form id="tecvancel-form" class="command-area">
+            <button type="button" id="tecvancel-clear" class="btn-action" title="Limpar"><i class="fas fa-trash"></i></button>
+            <button type="button" id="tecvancel-upload" class="btn-action" title="Anexar Foto"><i class="fas fa-camera"></i></button>
+            <input type="file" id="tecvancel-file-input" accept="image/*" style="display: none;">
+
             <div class="input-wrapper">
-                <input type="text" id="tella-input" placeholder="Digite sua dúvida..." autocomplete="off">
+                <input type="text" id="tecvancel-input" placeholder="Digite sua dúvida..." autocomplete="off">
             </div>
-            
-            <button type="submit" id="tella-send" class="btn-action">ENVIAR</button>
+
+            <button type="submit" id="tecvancel-send" class="btn-action">ENVIAR</button>
         </form>
     </div>
 

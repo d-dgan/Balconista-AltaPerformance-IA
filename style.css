@@ -64,7 +64,7 @@ body {
 }
 
 /* --- LOGO (CONFIGURAÇÃO PADRÃO - DESKTOP) --- */
-.tella-logo-bg {
+.tecvancel-logo-bg {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -104,7 +104,7 @@ body {
     letter-spacing: 4px;
 }
 
-.by-tella {
+.by-tecvancel {
     display: block;
     font-size: 0.85rem;
     color: var(--text-muted);
@@ -319,7 +319,7 @@ input:focus {
     }
     
     /* Configuração da Logo no Mobile (Visível e no Topo) */
-    .tella-logo-bg {
+    .tecvancel-logo-bg {
         position: relative;
         top: auto;
         left: auto;

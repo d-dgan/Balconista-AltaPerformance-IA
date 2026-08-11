@@ -184,7 +184,7 @@ animate();
 /* =========================================================
    3. SCRIPT DE LOGIN E COMUNICAÇÃO (FETCH / DEVICE ID)
    ========================================================= */
-const n8nWebhookURL = 'https://tella-n8n.o40vmn.easypanel.host/webhook/login-auth'; 
+const n8nWebhookURL = 'https://chat-n8n-main.wcvao0.easypanel.host/webhook/login-auth';
 
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     // É importante não usar e.preventDefault() aqui se quisermos que a validação HTML5
@@ -207,14 +207,14 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
     // --- NOVA LÓGICA DE DEVICE ID ---
     // Tenta recuperar o ID salvo no navegador
-    let deviceId = localStorage.getItem('tella_device_id');
-    
+    let deviceId = localStorage.getItem('tecvancel_device_id');
+
     // Se não existir (primeiro acesso neste navegador), cria um novo
     if (!deviceId) {
         // Gera um ID aleatório (ex: dev_a1b2c3d4_17000000)
         deviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
         // Salva para os próximos logins
-        localStorage.setItem('tella_device_id', deviceId);
+        localStorage.setItem('tecvancel_device_id', deviceId);
     }
     // --------------------------------
 
