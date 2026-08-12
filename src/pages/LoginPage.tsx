@@ -150,36 +150,35 @@ export default function LoginPage() {
           <div className="content-box">
             <div className="scrollable-content">
               <h2 className="info-title">
-                <i className="fas fa-robot" /> Inteligência Artificial Farmacêutica
+                <i className="fas fa-layer-group" /> Plataforma Completa para Farmácias
               </h2>
 
               <p className="info-text">
-                O nosso Balconista Pro IA é uma ferramenta sofisticada e altamente estruturada, projetada para
-                simular um atendente de farmácia com vasta experiência e foco em resultados. Suas funções são
-                desenhadas para encantar, fidelizar clientes e aumentar o ticket médio.
+                O Balconista Pro IA é uma plataforma completa de gestão e crescimento para farmácias: atendimento
+                inteligente via WhatsApp/Instagram, geração de materiais de marketing e ferramentas de gestão num
+                só lugar.
               </p>
 
               <div className="feature-box">
-                <div className="feature-title">Persona Especializada</div>
+                <div className="feature-title">Atendimento Inteligente</div>
                 <p className="info-text" style={{ marginBottom: 0 }}>
-                  Atua como um atendente com 20 anos de experiência, especialista em Atendimento Consultivo,
-                  criação de kits inteligentes, indicação de genéricos com valor e pós-venda ativo via WhatsApp.
+                  CRM de WhatsApp com IA Copiloto sugerindo respostas em tempo real e um Chat IA especialista em
+                  orientação farmacêutica sempre disponível.
                 </p>
               </div>
 
               <div className="feature-box" style={{ borderColor: '#fff' }}>
                 <div className="feature-title" style={{ color: '#fff' }}>
-                  Objetivo Estratégico
+                  Ferramentas de Crescimento
                 </div>
                 <p className="info-text" style={{ marginBottom: 0 }}>
-                  Auxiliar os balconistas a se tornarem verdadeiros vendedores de saúde e confiança. Um guia que
-                  não apenas vende, mas orienta, encanta e converte em fidelização e lucratividade para a
-                  farmácia.
+                  Gerador de encartes com IA, painel multi-loja e, em breve, precificação inteligente e análise
+                  de potencial da região.
                 </p>
               </div>
 
               <p className="info-text">
-                <em>"Você começa a dominar o balcão, o paciente e a sua própria confiança."</em>
+                <em>"Uma plataforma só, do atendimento no balcão ao crescimento da sua farmácia."</em>
               </p>
             </div>
           </div>
