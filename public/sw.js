@@ -1,39 +1,45 @@
 /* --- sw.js --- */
-const CACHE_NAME = 'balconista-v3';
+const CACHE_NAME = 'balconista-v4';
 const ASSETS = [
-  '/',
   '/logo-tecvancel.png',
   '/icon-192.png',
   '/icon-512.png'
 ];
 
-// Instalação do Service Worker
+// Instalação do Service Worker — assume controle imediato, sem esperar
+// as abas antigas fecharem (evita ficar preso numa versão velha do app).
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
 });
 
 // Ativação e limpeza de caches antigos
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          return caches.delete(key);
-        }
-      }));
-    })
+    Promise.all([
+      caches.keys().then((keyList) =>
+        Promise.all(keyList.map((key) => (key !== CACHE_NAME ? caches.delete(key) : undefined)))
+      ),
+      self.clients.claim(),
+    ])
   );
 });
 
-// Interceptar pedidos para funcionar offline
+// Network-first: nunca serve HTML/JS/CSS antigo do cache enquanto o
+// usuário está online — só cai pro cache se a rede falhar (offline de
+// verdade). Cache-first aqui já causou tela quebrada depois de deploy
+// (index.html velho pedindo um chunk .js que não existe mais).
 self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    })
+    fetch(e.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
