@@ -1,0 +1,380 @@
+/* Ported from the original chat-style.css — scoped under .chat-page so it
+   never leaks into other routes of the SPA. */
+.chat-page {
+  --bg-dark: #0b0e14;
+  --neon-blue: #00f3ff;
+  --neon-purple: #bc13fe;
+  --text-main: #ffffff;
+  --text-muted: #a0aec0;
+  --border-color: rgba(0, 243, 255, 0.3);
+  --glass-bg: rgba(21, 26, 35, 0.95);
+
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 100dvh;
+  position: relative;
+}
+
+.chat-page #particleCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.chat-page .hud-header {
+  height: 70px;
+  flex-shrink: 0;
+  background: rgba(11, 14, 20, 0.95);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30px;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+.chat-page .brand-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: #fff;
+}
+.chat-page .brand-logo span {
+  color: var(--neon-blue);
+}
+.chat-page .user-status {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+}
+.chat-page .user-name {
+  color: var(--neon-blue);
+}
+
+.chat-page .btn-logout {
+  background: transparent;
+  border: 1px solid #ff4444;
+  color: #ff4444;
+  padding: 5px 15px;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.chat-page .terminal-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-width: 1000px;
+  width: 95%;
+  margin: 20px auto;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-color);
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 30px rgba(0, 243, 255, 0.05);
+}
+
+.chat-page .terminal-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border-top: 2px solid var(--neon-blue);
+  border-left: 2px solid var(--neon-blue);
+}
+.chat-page .terminal-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  border-bottom: 2px solid var(--neon-blue);
+  border-right: 2px solid var(--neon-blue);
+}
+
+.chat-page #tecvancel-chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chat-page #tecvancel-chat-log::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-page #tecvancel-chat-log::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+.chat-page #tecvancel-chat-log::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.chat-page .tecvancel-message {
+  max-width: 100%;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  animation: chatFadeIn 0.3s ease;
+}
+
+.chat-page .tecvancel-user {
+  align-self: flex-end;
+  background: rgba(0, 243, 255, 0.05);
+  border-right: 2px solid var(--neon-blue);
+  color: #fff;
+  border-radius: 10px 10px 0 10px;
+  text-align: right;
+}
+
+.chat-page .tecvancel-system {
+  text-align: center;
+  color: #a0aec0;
+  font-size: 0.8rem;
+  margin: 10px 0;
+  font-family: 'Rajdhani', sans-serif;
+  flex-shrink: 0;
+}
+
+.chat-page .tecvancel-warning {
+  text-align: center;
+  color: #ffb020;
+  font-size: 0.8rem;
+  margin: 10px 0;
+  font-family: 'Rajdhani', sans-serif;
+  flex-shrink: 0;
+}
+
+.chat-page .tecvancel-bot {
+  align-self: flex-start;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 4px solid var(--neon-blue);
+  color: #e0e0e0;
+  border-radius: 0 10px 10px 10px;
+  padding: 0;
+}
+.chat-page .tecvancel-bot > strong:first-child {
+  display: block;
+  padding: 15px 20px 5px 20px;
+  color: var(--neon-blue);
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+}
+
+.chat-page .tecvancel-bot h3 {
+  color: #00f3ff !important;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.3em;
+  font-weight: 800;
+  margin: 25px 0 15px 0;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+  line-height: 1.3;
+}
+.chat-page .tecvancel-bot h4 {
+  color: #00f3ff !important;
+  display: block;
+  width: 100%;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1.1em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, rgba(0, 243, 255, 0.15), transparent);
+  border-left: 3px solid #00f3ff;
+  padding: 8px 20px;
+}
+
+.chat-page .tecvancel-bot p {
+  margin-bottom: 12px;
+  padding: 0 20px;
+  color: #cfd8dc;
+  text-align: left;
+}
+
+.chat-page .tecvancel-bot ul {
+  margin: 15px 0;
+  padding: 0 20px;
+  list-style: none;
+}
+
+.chat-page .tecvancel-bot li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 10px;
+  color: #fff;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.chat-page .tecvancel-bot li::before {
+  content: '>';
+  position: absolute;
+  left: 0;
+  color: var(--neon-blue);
+  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.chat-page .tecvancel-bot strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.chat-page .image-message img {
+  max-width: 220px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: block;
+}
+.chat-page .tecvancel-user.image-message {
+  background: transparent;
+  border-right: none;
+  padding: 0 20px;
+}
+
+.chat-page .command-area {
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 15px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 15px);
+}
+
+.chat-page .input-wrapper {
+  flex: 1;
+  display: flex;
+}
+
+.chat-page #tecvancel-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--neon-blue);
+  padding: 15px;
+  outline: none;
+  border-radius: 4px;
+}
+
+.chat-page .btn-action {
+  height: 50px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: bold;
+}
+
+.chat-page #tecvancel-send {
+  background: var(--neon-blue);
+  color: #000;
+  padding: 0 25px;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  font-weight: 800;
+}
+.chat-page #tecvancel-send:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.chat-page #tecvancel-upload,
+.chat-page #tecvancel-clear {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--neon-blue);
+  width: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.chat-page #tecvancel-upload.attached {
+  color: #000;
+  background: var(--neon-blue);
+}
+
+@media (max-width: 768px) {
+  .chat-page .terminal-container {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .chat-page .hud-header {
+    padding: 0 15px;
+    height: 60px;
+  }
+  .chat-page .user-status span {
+    display: none;
+  }
+  .chat-page .user-name {
+    font-size: 0.9rem;
+  }
+  .chat-page .brand-logo {
+    font-size: 1.2rem;
+  }
+  .chat-page .tecvancel-message {
+    padding: 10px 10px;
+  }
+  .chat-page .tecvancel-bot > strong:first-child {
+    padding: 15px 15px 5px 15px;
+  }
+  .chat-page .tecvancel-bot h3,
+  .chat-page .tecvancel-bot h4,
+  .chat-page .tecvancel-bot p,
+  .chat-page .tecvancel-bot ul {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .chat-page .command-area {
+    padding: 10px;
+    padding-bottom: 60px !important;
+    background-color: var(--bg-dark);
+    position: relative;
+    z-index: 999;
+  }
+  .chat-page #tecvancel-input {
+    padding: 12px;
+    font-size: 16px;
+  }
+}
+
+@media all and (display-mode: standalone) {
+  .chat-page .command-area {
+    padding-bottom: 60px !important;
+  }
+}
+
+@keyframes chatFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
