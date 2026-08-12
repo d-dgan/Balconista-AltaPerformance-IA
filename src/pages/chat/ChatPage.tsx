@@ -30,6 +30,28 @@ function BotMessage({ html, scrollContainer }: { html: string; scrollContainer: 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
 
+    // Guarda o scrollTop que NÓS mesmos escrevemos por último. Comparar
+    // com o valor atual do DOM a cada tick (em vez de confiar num evento
+    // "scroll" assíncrono) evita a corrida: o evento pode chegar depois
+    // do próximo tick de 5ms, e aí o loop forçava o scroll de volta pro
+    // fim antes mesmo de perceber que o usuário tinha acabado de rolar
+    // pra cima. Sem margem de "perto do fim" aqui de propósito — uma
+    // margem tipo "<80px volta sozinho" competia bem no início do gesto
+    // de rolar (o conteúdo cresce a cada 5ms, então mesmo parado o
+    // usuário "entra" nessa margem), causando o efeito ímã. Uma vez que
+    // o usuário mexe no scroll, fica destravado até a mensagem terminar.
+    let lastSetScrollTop = scrollContainer()?.scrollTop ?? 0;
+
+    function maybeStickToBottom() {
+      const log = scrollContainer();
+      if (!log) return;
+      const untouchedSinceOurLastWrite = Math.abs(log.scrollTop - lastSetScrollTop) < 2;
+      if (untouchedSinceOurLastWrite) {
+        log.scrollTop = log.scrollHeight;
+        lastSetScrollTop = log.scrollTop;
+      }
+    }
+
     async function typeNode(sourceNode: ChildNode, targetNode: Node) {
       if (sourceNode.nodeType === Node.TEXT_NODE) {
         const textContent = sourceNode.textContent ?? '';
@@ -38,11 +60,7 @@ function BotMessage({ html, scrollContainer }: { html: string; scrollContainer: 
 
         for (let i = 0; i < textContent.length; i++) {
           textNode.textContent += textContent[i];
-          const log = scrollContainer();
-          if (log) {
-            const distanceToBottom = log.scrollHeight - log.scrollTop - log.clientHeight;
-            if (distanceToBottom < 100) log.scrollTop = log.scrollHeight;
-          }
+          maybeStickToBottom();
           await new Promise((resolve) => setTimeout(resolve, 5));
         }
       } else if (sourceNode.nodeType === Node.ELEMENT_NODE) {
@@ -82,6 +100,11 @@ export default function ChatPage() {
   const chatLogRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Fica "grudado" no fim enquanto o usuário não rolar pra cima de propósito;
+  // some assim que ele sai da zona perto do fim, e só volta quando ele
+  // mesmo rolar de volta pro fim (ou mandar uma mensagem nova).
+  const stickToBottomRef = useRef(true);
+
   const displayName = user?.organization?.name?.toUpperCase() || 'OPERADOR';
 
   function scrollToBottom() {
@@ -89,7 +112,20 @@ export default function ChatPage() {
     if (el) el.scrollTop = el.scrollHeight;
   }
 
-  useEffect(scrollToBottom, [entries]);
+  useEffect(() => {
+    const el = chatLogRef.current;
+    if (!el) return;
+    function handleScroll() {
+      const distanceToBottom = el!.scrollHeight - el!.scrollTop - el!.clientHeight;
+      stickToBottomRef.current = distanceToBottom < 80;
+    }
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (stickToBottomRef.current) scrollToBottom();
+  }, [entries]);
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -120,6 +156,8 @@ export default function ChatPage() {
     e.preventDefault();
     const question = input.trim();
     if (!question && !attachedImage) return;
+
+    stickToBottomRef.current = true;
 
     const newEntries: LogEntry[] = [];
     if (question) newEntries.push({ id: nextId++, kind: 'user', text: question });
