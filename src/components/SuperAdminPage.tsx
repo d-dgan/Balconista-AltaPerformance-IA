@@ -759,7 +759,7 @@ export default function SuperAdminPage() {
                         <ShieldAlert size={40} className="text-rose-500" />
                     </div>
                     <h2 className="text-2xl font-black tracking-tight mb-2 text-slate-800 dark:text-white">{t('Acesso Restrito', 'Restricted Access')}</h2>
-                    <p className="text-sm opacity-50 max-w-xs leading-relaxed font-medium dark:text-white/50">{t('Esta área é exclusiva para a equipe de engenharia da Tella.', 'This area is exclusive to the Tella engineering team.')}</p>
+                    <p className="text-sm opacity-50 max-w-xs leading-relaxed font-medium dark:text-white/50">{t('Esta área é exclusiva para a equipe de engenharia do Balconista Pro.', 'This area is exclusive to the Balconista Pro engineering team.')}</p>
                 </div>
             </div>
         );
@@ -773,7 +773,7 @@ export default function SuperAdminPage() {
                     <div className="space-y-1">
                         <div className="flex items-center gap-3">
                             <div className="px-2 py-0.5 rounded-md bg-primary-500 text-[10px] font-black text-white tracking-widest uppercase shadow-lg shadow-primary-500/20">CORE</div>
-                            <h1 className="text-3xl font-black tracking-tighter text-slate-800 dark:text-white">Tella <span className="text-primary-500">Core</span></h1>
+                            <h1 className="text-3xl font-black tracking-tighter text-slate-800 dark:text-white">Balconista <span className="text-primary-500">Core</span></h1>
                         </div>
                         <p className="text-xs font-bold opacity-30 uppercase tracking-widest flex items-center gap-2 dark:text-white/30">
                             <Globe size={14} /> {t('Global Infrastructure Management', 'Global Infrastructure Management')}
