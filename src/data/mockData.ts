@@ -208,17 +208,17 @@ export const messages: Record<string, Message[]> = {
 };
 
 export const orgUsers = [
-    { id: 'usr_001', name: 'Dr. Rafael Mendes', email: 'rafael@expervivenciachat.com.br', role: 'admin', status: 'online', avatar: 'https://i.pravatar.cc/150?img=60' },
-    { id: 'usr_002', name: 'Ana Costa', email: 'ana@expervivenciachat.com.br', role: 'user', status: 'online', avatar: 'https://i.pravatar.cc/150?img=47' },
-    { id: 'usr_003', name: 'Lucas Martins', email: 'lucas@expervivenciachat.com.br', role: 'user', status: 'offline', avatar: 'https://i.pravatar.cc/150?img=33' },
-    { id: 'usr_004', name: 'Juliana Rocha', email: 'juliana@expervivenciachat.com.br', role: 'user', status: 'busy', avatar: 'https://i.pravatar.cc/150?img=44' },
+    { id: 'usr_001', name: 'Dr. Rafael Mendes', email: 'rafael@balconistapro.com.br', role: 'admin', status: 'online', avatar: 'https://i.pravatar.cc/150?img=60' },
+    { id: 'usr_002', name: 'Ana Costa', email: 'ana@balconistapro.com.br', role: 'user', status: 'online', avatar: 'https://i.pravatar.cc/150?img=47' },
+    { id: 'usr_003', name: 'Lucas Martins', email: 'lucas@balconistapro.com.br', role: 'user', status: 'offline', avatar: 'https://i.pravatar.cc/150?img=33' },
+    { id: 'usr_004', name: 'Juliana Rocha', email: 'juliana@balconistapro.com.br', role: 'user', status: 'busy', avatar: 'https://i.pravatar.cc/150?img=44' },
 ];
 
 export const connections = [
     { id: 'conn_001', type: 'whatsapp' as const, name: 'WhatsApp Principal', number: '+55 11 99999-0001', status: 'connected', isDefault: true, method: 'api' },
     { id: 'conn_002', type: 'whatsapp' as const, name: 'WhatsApp Vendas', number: '+55 11 99999-0002', status: 'disconnected', isDefault: false, method: 'qrcode' },
-    { id: 'conn_003', type: 'instagram' as const, name: 'Instagram @expervivencia', number: '@expervivencia', status: 'connected', isDefault: false, method: 'api' },
-    { id: 'conn_004', type: 'messenger' as const, name: 'Facebook Messenger', number: 'Expervivência Chat', status: 'connected', isDefault: false, method: 'api' },
+    { id: 'conn_003', type: 'instagram' as const, name: 'Instagram @balconistapro', number: '@balconistapro', status: 'connected', isDefault: false, method: 'api' },
+    { id: 'conn_004', type: 'messenger' as const, name: 'Facebook Messenger', number: 'Balconista Pro', status: 'connected', isDefault: false, method: 'api' },
 ];
 
 export const schedules = [
