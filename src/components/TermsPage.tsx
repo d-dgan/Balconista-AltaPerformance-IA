@@ -19,12 +19,12 @@ export default function TermsPage() {
         {
             icon: <FileText className="text-indigo-400" size={24} />,
             title: t("1. Aceitação dos Termos", "1. Acceptance of Terms"),
-            content: t("Ao acessar e utilizar a plataforma Exper Chat, você concorda em cumprir e estar vinculado a estes Termos de Serviço. Se você não concordar com qualquer parte destes termos, não deverá utilizar nossa plataforma.", "By accessing and using the Exper Chat platform, you agree to comply with and be bound by these Terms of Service. If you do not agree with any part of these terms, you must not use our platform.")
+            content: t("Ao acessar e utilizar a plataforma Balconista Pro, você concorda em cumprir e estar vinculado a estes Termos de Serviço. Se você não concordar com qualquer parte destes termos, não deverá utilizar nossa plataforma.", "By accessing and using the Balconista Pro platform, you agree to comply with and be bound by these Terms of Service. If you do not agree with any part of these terms, you must not use our platform.")
         },
         {
             icon: <ShieldCheck className="text-purple-400" size={24} />,
             title: t("2. Descrição do Serviço", "2. Service Description"),
-            content: t("O Exper Chat é uma solução omnichannel que permite a gestão de atendimentos via WhatsApp, Instagram e Facebook. O serviço é fornecido 'como está' e sua disponibilidade depende das APIs de terceiros (como as da Meta).", "Exper Chat is an omnichannel solution that allows handling through WhatsApp, Instagram, and Facebook. The service is provided 'as is' and its availability depends on third-party APIs (such as Meta's).")
+            content: t("O Balconista Pro é uma solução omnichannel que permite a gestão de atendimentos via WhatsApp, Instagram e Facebook. O serviço é fornecido 'como está' e sua disponibilidade depende das APIs de terceiros (como as da Meta).", "Balconista Pro is an omnichannel solution that allows handling through WhatsApp, Instagram, and Facebook. The service is provided 'as is' and its availability depends on third-party APIs (such as Meta's).")
         },
         {
             icon: <CheckCircle className="text-cyan-400" size={24} />,

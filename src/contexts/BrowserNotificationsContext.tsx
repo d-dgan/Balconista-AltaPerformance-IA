@@ -63,7 +63,7 @@ export function BrowserNotificationsProvider({ children }: { children: ReactNode
     // ── Update document title with badge ──────────────────────────────────
     useEffect(() => {
         if (unreadCount > 0) {
-            document.title = `(${unreadCount}) Exper Chat`;
+            document.title = `(${unreadCount}) Balconista Pro`;
         } else {
             document.title = originalTitle.current;
         }

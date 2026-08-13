@@ -24,7 +24,7 @@ export default function PrivacyPage() {
         {
             icon: <MessageSquare className="text-purple-400" size={24} />,
             title: t("Uso de Dados de Mensagens", "Use of Message Data"),
-            content: t("Para o funcionamento do Exper Chat, processamos o conteúdo das mensagens enviadas e recebidas através das integrações conectadas (WhatsApp, Instagram e Facebook). Esses dados são utilizados exclusivamente para permitir o atendimento omnichannel.", "For the operation of Exper Chat, we process the content of messages sent and received through the connected integrations (WhatsApp, Instagram, and Facebook). These data are used exclusively to allow omnichannel service.")
+            content: t("Para o funcionamento da nossa plataforma, processamos o conteúdo das mensagens enviadas e recebidas através das integrações conectadas (WhatsApp, Instagram e Facebook). Esses dados são utilizados exclusivamente para permitir o atendimento omnichannel.", "For the operation of our platform, we process the content of messages sent and received through the connected integrations (WhatsApp, Instagram, and Facebook). These data are used exclusively to allow omnichannel service.")
         },
         {
             icon: <Shield className="text-cyan-400" size={24} />,
@@ -121,7 +121,7 @@ export default function PrivacyPage() {
                         <a href="mailto:contato@expervivenciafarma.com.br" className="hover:text-indigo-400 transition-colors">contato@expervivenciafarma.com.br</a>
                     </div>
                     <p className="text-xs pt-8 border-t border-white/5">
-                        {t('© 2026 Exper Chat. Todos os direitos reservados.', '© 2026 Exper Chat. All rights reserved.')}
+                        {t('© 2026 Balconista Pro. Todos os direitos reservados.', '© 2026 Balconista Pro. All rights reserved.')}
                     </p>
                 </footer>
             </div>

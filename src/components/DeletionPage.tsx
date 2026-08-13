@@ -19,7 +19,7 @@ export default function DeletionPage() {
         {
             icon: <ShieldAlert className="text-rose-400" size={24} />,
             title: t("Instruções de Exclusão de Dados", "Data Deletion Instructions"),
-            content: t("De acordo com as regras da Plataforma Meta, fornecemos as instruções para que você solicite a exclusão de seus dados pessoais processados pelo Exper Chat.", "In accordance with Meta Platform rules, we provide instructions for you to request the deletion of your personal data processed by Exper Chat.")
+            content: t("De acordo com as regras da Plataforma Meta, fornecemos as instruções para que você solicite a exclusão de seus dados pessoais processados pela nossa plataforma.", "In accordance with Meta Platform rules, we provide instructions for you to request the deletion of your personal data processed by our platform.")
         },
         {
             icon: <UserX className="text-orange-400" size={24} />,

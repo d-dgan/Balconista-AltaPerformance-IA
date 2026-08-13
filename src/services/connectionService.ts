@@ -34,7 +34,7 @@ const DEMO_CONNECTIONS: Record<string, Connection[]> = {
             channel: 'whatsapp',
             method: 'evolution',
             name: 'WhatsApp Principal',
-            instance_name: 'exper-chat-principal',
+            instance_name: 'balconista-principal',
             webhook_url: '',
             created_at: new Date().toISOString(),
         },
@@ -161,7 +161,7 @@ export async function listOrganizations() {
     if (!isSupabaseConfigured()) {
         return {
             data: [
-                { id: 'org_001', name: 'Exper Chat (Demo)' },
+                { id: 'org_001', name: 'Balconista Pro (Demo)' },
                 { id: 'org_002', name: 'Farmácia Demo' },
             ],
             error: null,

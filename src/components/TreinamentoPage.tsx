@@ -14,7 +14,7 @@ interface Course {
 
 const getCourses = (t: any): Course[] => [
     {
-        title: t('Exper Chat: A Nova Era da Farmácia', 'Exper Chat: The New Era of Pharmacy'),
+        title: t('Balconista Pro: A Nova Era da Farmácia', 'Balconista Pro: The New Era of Pharmacy'),
         description: t('Conheça o impacto comercial e a visão estratégica por trás da plataforma.', 'Learn about the commercial impact and strategic vision behind the platform.'),
         duration: t('5 min', '5 min'),
         level: t('Iniciante', 'Beginner'),
@@ -252,14 +252,14 @@ export default function TreinamentoPage({ onNavigate }: TreinamentoPageProps) {
                                 height="100%" 
                                 allow="autoplay" 
                                 className="border-none"
-                                title="Masterclass Treinamento Exper Chat"
+                                title="Masterclass Treinamento Balconista Pro"
                             />
                         </div>
                         <div className="p-5 bg-white/5 backdrop-blur-md">
                             <div className="flex items-start justify-between gap-4">
                                 <div>
                                     <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
-                                        {t('Treinamento Completo: Dominando o Exper Chat', 'Complete Training: Mastering Exper Chat')}
+                                        {t('Treinamento Completo: Dominando o Balconista Pro', 'Complete Training: Mastering Balconista Pro')}
                                     </h4>
                                     <p className="text-[11px] text-slate-500 dark:text-white/40 leading-relaxed max-w-2xl">
                                         {t(
@@ -319,7 +319,7 @@ export default function TreinamentoPage({ onNavigate }: TreinamentoPageProps) {
                                 </span>
                                 <h3 className="text-lg font-bold mb-2">Masterclass: {t('Atendimento Farmacêutico Digital', 'Digital Pharmaceutical Customer Service')}</h3>
                                 <p className="text-sm opacity-50 mb-4 max-w-lg dark:text-white/50">
-                                    {t('Aprenda todas as funcionalidades do Exper Chat e transforme o atendimento da sua farmácia com estratégias omnichannel.', 'Learn all the features of Exper Chat and transform your pharmacy\'s customer service with omnichannel strategies.')}
+                                    {t('Aprenda todas as funcionalidades do Balconista Pro e transforme o atendimento da sua farmácia com estratégias omnichannel.', 'Learn all the features of Balconista Pro and transform your pharmacy\'s customer service with omnichannel strategies.')}
                                 </p>
                                 <div className="flex items-center gap-4">
                                     <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm font-semibold">
