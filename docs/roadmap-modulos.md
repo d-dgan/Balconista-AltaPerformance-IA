@@ -31,6 +31,7 @@
 
 *Reaproveitam o motor de IA que já existe no Chat.*
 
+- **Consulta ao Bulário ANVISA** — busca de medicamentos, acesso a PDFs de bulas (paciente e profissional) e resumo automático de posologia/contraindicações via IA (ver [especificação completa](file:///c:/Users/gta/Documents/GitHub/Balconista-AltaPerformance-IA/docs/feature-bulario-anvisa.md)).
 - **Auditoria de atendimento** — o Chat já loga as conversas; dá pra
   gerar um scorecard automático de qualidade por balconista (seguiu o
   protocolo? ofereceu upsell? indicou perfumaria?).
