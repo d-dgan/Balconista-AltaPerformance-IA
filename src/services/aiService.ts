@@ -220,36 +220,43 @@ export async function fetchOrgLogoUrl(
     return { url: data?.logo_url ? `${data.logo_url}?t=${Date.now()}` : null, error };
 }
 
+// Logo fica no Cloudflare R2 (não no Supabase Storage) — ver api/upload-logo.ts.
+// O upload passa por essa function porque as chaves R2 são secretas e não
+// podem ir pro bundle do front-end.
+
+function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}
+
 export async function uploadClientLogo(
     organizationId: string | number,
     file: File
 ): Promise<{ url: string | null; error: any }> {
     if (!isSupabaseConfigured()) return { url: null, error: 'demo-mode' };
 
-    const ext = file.name.split('.').pop();
-    const filePath = `${organizationId}/logo.${ext}`;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return { url: null, error: 'Sessão inválida' };
 
-    const { error: uploadError } = await supabase.storage
-        .from('client-logos')
-        .upload(filePath, file, { upsert: true, contentType: file.type });
+    const base64Data = await fileToBase64(file);
 
-    if (uploadError) return { url: null, error: uploadError };
+    const response = await fetch('/api/upload-logo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ organizationId, contentType: file.type, base64Data }),
+    });
 
-    const { data } = supabase.storage.from('client-logos').getPublicUrl(filePath);
-    const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) return { url: null, error: result.error ?? 'Erro ao enviar logo' };
 
-    // Persist to organizations table
-    const { error: updateError } = await supabase
-        .from('organizations')
-        .update({ logo_url: data.publicUrl })
-        .eq('id', organizationId);
-
-    if (updateError) {
-        console.error('Error updating logo_url in organizations table:', updateError);
-        return { url: null, error: updateError };
-    }
-
-    return { url: publicUrl, error: null };
+    return { url: result.url, error: null };
 }
 
 export async function deleteClientLogo(
@@ -257,21 +264,20 @@ export async function deleteClientLogo(
 ): Promise<{ error: any }> {
     if (!isSupabaseConfigured()) return { error: 'demo-mode' };
 
-    // List files in org folder and delete all
-    const { data: files } = await supabase.storage
-        .from('client-logos')
-        .list(`${organizationId}`);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return { error: 'Sessão inválida' };
 
-    if (files && files.length > 0) {
-        const paths = files.map((f) => `${organizationId}/${f.name}`);
-        await supabase.storage.from('client-logos').remove(paths);
-    }
+    const response = await fetch('/api/upload-logo', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ organizationId }),
+    });
 
-    // Clear organizations.logo_url
-    const { error } = await supabase
-        .from('organizations')
-        .update({ logo_url: null })
-        .eq('id', organizationId);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) return { error: result.error ?? 'Erro ao remover logo' };
 
-    return { error };
+    return { error: null };
 }
