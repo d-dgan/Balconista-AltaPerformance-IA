@@ -36,8 +36,12 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+        // status 206 (partial content, ex: range requests de <audio>) não
+        // pode ser guardado via cache.put — a Cache API lança TypeError.
+        if (response.status === 200) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+        }
         return response;
       })
       .catch(() => caches.match(e.request))
