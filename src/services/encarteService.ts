@@ -1,6 +1,10 @@
 import { supabase } from './supabase';
 
-const WEBHOOK_URL = 'https://n8n.expervivenciafarma.com.br/webhook/imagensia';
+// Workflow "Balconista - Gerador de Encarte" no n8n de produção (ORAQLE VPS).
+// A URL antiga (n8n.expervivenciafarma.com.br) apontava pra uma instância
+// órfã com um workflow nunca terminado (nó de busca de imagem com API key
+// placeholder, desconectado do resto do fluxo).
+const WEBHOOK_URL = 'https://chat-n8n-main.wcvao0.easypanel.host/webhook/imagensia';
 
 // ==========================================
 // TYPES
@@ -46,9 +50,17 @@ export async function generateEncarte(
     payload: EncartePayload
 ): Promise<{ image_url: string | null; error: string | null }> {
     try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            return { image_url: null, error: 'Sessão inválida. Faça login novamente.' };
+        }
+
         const response = await fetch(WEBHOOK_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+            },
             body: JSON.stringify(payload),
         });
 
