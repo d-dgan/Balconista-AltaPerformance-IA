@@ -1,0 +1,1321 @@
+{
+  "createdAt": "2026-08-17T12:07:20.419Z",
+  "id": "782u22eQ6Mv7YiYE",
+  "name": "Balconista - Gerador de Encarte",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "n-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        300
+      ],
+      "webhookId": "balconista-encarte-hook",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "imagensia",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "n-validar-sessao",
+      "name": "Validar Sessão",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://wejzydpxyghddjekokgd.supabase.co/auth/v1/user",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "__SUPABASE_ANON_KEY__"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{ $json.headers.authorization }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "n-buscar-perfil",
+      "name": "Buscar Perfil",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://wejzydpxyghddjekokgd.supabase.co/rest/v1/users?auth_id=eq.{{ $json.id }}&select=organization_id,role",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "__SUPABASE_SERVICE_ROLE_KEY__"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer __SUPABASE_SERVICE_ROLE_KEY__"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "n-autorizar",
+      "name": "Autorizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const profile = Array.isArray($input.first().json) ? $input.first().json[0] : $input.first().json;\nconst body = $('Webhook').item.json.body;\nif (!profile) throw new Error('Sessão inválida');\nif (profile.role !== 'super_admin' && String(profile.organization_id) !== String(body.org.id)) {\n  throw new Error('Sem permissão para gerar encarte para essa organização');\n}\nreturn [{ json: body }];"
+      }
+    },
+    {
+      "id": "n-buscar-ai-settings",
+      "name": "Buscar AI Settings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://wejzydpxyghddjekokgd.supabase.co/rest/v1/ai_settings?organization_id=eq.{{ $json.org.id }}&select=gemini_api_key,serpapi_key",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "__SUPABASE_SERVICE_ROLE_KEY__"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer __SUPABASE_SERVICE_ROLE_KEY__"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "n-formatar-prompt",
+      "name": "Formatar Prompt e Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Extrai dados do payload autorizado e monta o prompt pro Gemini\nconst body = $('Autorizar').item.json;\nconst settingsArr = $input.first().json;\nconst settings = Array.isArray(settingsArr) ? settingsArr[0] : settingsArr;\nif (!settings || !settings.gemini_api_key || !settings.serpapi_key) {\n  throw new Error('Configure as chaves do Gemini e SerpApi em Configurações de IA antes de gerar encartes.');\n}\n\nconst org = body.org;\nconst products = body.products || [];\nconst style = body.style;\n\nconst productsList = products.map((p, i) => {\n  return `Produto ${i + 1}:\n  - Nome: ${p.name}\n  - EAN: ${p.ean}\n  - Preço DE (riscado): R$ ${p.price_from}\n  - Preço POR (gigante/destaque): R$ ${p.price_to}\n  - Selo/Tag: ${p.tag || 'Oferta'}\n  - Texto extra: ${p.extra_text || ''}`;\n}).join('\\n\\n');\n\nconst aspectRatio = style.format === 'story' ? '9:16' : '1:1';\n\nconst prompt = `Você é um Diretor de Arte Sênior premiado (Cannes Lions, D&AD), Estrategista de Marketing Visual e Mestre em Tipografia de Varejo Premium. Você domina composição editorial de revistas como Vogue, renderização 3D (Octane/Unreal Engine 5) e fotografia publicitária de altíssimo padrão.\n\n═══════════════════════════════════════════\n⚠️ INTEGRAÇÃO MULTIMODAL — ASSETS REAIS\n═══════════════════════════════════════════\nJunto com este prompt, recebo em anexo:\n  📌 Anexo 1 → LOGOMARCA oficial da farmácia (PNG com fundo transparente)\n  📌 Anexos seguintes → FOTOGRAFIAS REAIS dos produtos (via SerpApi/código de barras ou upload manual)\n\n🚫 REGRA INVIOLÁVEL DE INTEGRIDADE VISUAL:\nÉ TERMINANTEMENTE PROIBIDO inventar, desenhar ou gerar do zero qualquer embalagem, frasco, caixa ou rótulo de medicamento. Você DEVE usar EXCLUSIVAMENTE as fotos reais anexadas. Aplique \"studio relighting\", remova fundos sujos, adicione sombras suaves e reflexos sutis para integrá-las perfeitamente à cena 3D.\n\n═══════════════════════════════════════════\n🎯 MISSÃO\n═══════════════════════════════════════════\nRenderizar um encarte publicitário de ofertas ESPETACULAR, digno de uma agência de publicidade premiada, com qualidade de catálogo de luxo. O resultado deve fazer qualquer pessoa parar o scroll e olhar.\n\n═══════════════════════════════════════════\n🏪 IDENTIDADE DA FARMÁCIA\n═══════════════════════════════════════════\nMarca: \"${org.name}\"\nTom de voz da campanha: \"${org.tone}\"\nTema da campanha: \"${style.theme || ''}\"\n\n🔷 LOGO (TOPO — CABEÇALHO):\nA logomarca anexada DEVE aparecer com destaque absoluto no topo do encarte — centralizada, grande, nítida. Aplique um leve glow sutil da cor da paleta para destacá-la do fundo sem poluir.\n\n🔷 RODAPÉ — BLOCO DE CONTATO:\nNa base inferior, construa uma barra elegante em vidro translúcido (glassmorphism) contendo:\n   📍 \"${org.address}\"\n   ☎️ \"${org.phone}\"${style.validity ? `\n   📅 Válido até ${style.validity}` : ''}\n\n═══════════════════════════════════════════\n🎨 DIRETRIZES DE DESIGN PREMIUM\n═══════════════════════════════════════════\n1. PROPORÇÃO EXATA: ${aspectRatio} — Qualidade 8K fotorrealista.\n2. PALETA E ATMOSFERA: Cor de destaque/sotaque: \"${style.palette}\" — use-a com MODERAÇÃO em elementos-chave (badges, tipografia de preço, detalhes de luz), combinando com tons neutros e gradientes complementares escuros/claros. Estilo: \"${style.style}\".\n   - O fundo NUNCA deve ser branco chapado NEM ser pintado inteiramente da cor de destaque — a cor de destaque é um ACENTO, não o preenchimento da cena toda.\n   - Crie gradientes orgânicos multicamada usando variações sutis (tints/shades) da cor de destaque combinadas com neutros (cinza-chumbo, off-white, preto).\n   - Adicione formas geométricas abstratas sutis e desfocadas para criar dimensão.\n3. TEXTURAS PREMIUM OBRIGATÓRIAS (combine pelo menos 3):\n   - Glassmorphism (painéis de vidro fosco semitransparente)\n   - Grain/Noise sutil (2-4%) para textura fotográfica\n   - Bokeh luminoso desfocado no plano de fundo\n   - Partículas brilhantes microscópicas flutuando\n   - Rim lighting cinematográfico nas bordas dos produtos\n   - Reflexos de luz anamórfica discretos\n4. MICRO-ELEMENTOS DE SAÚDE (SUTIS): silhuetas translúcidas de moléculas, folhas orgânicas ou ondas de pulso cardíaco — extremamente sutis, jamais competindo com os produtos.\n\n═══════════════════════════════════════════\n👤 MODELO HUMANO — CONEXÃO EMOCIONAL\n═══════════════════════════════════════════\nAnalize os produtos e deduza o público-alvo:\n   • Fraldas/Pomadas → Mãe jovem carinhosa\n   • Whey/Creatina → Atleta/Fitness vibrante\n   • Colágeno/Skincare → Mulher radiante 30-50 anos\n   • Pressão/Glicemia → Idoso ativo e saudável\n   • Vitaminas infantis → Criança feliz com os pais\n   • Genéricos → Farmacêutica(o) profissional sorridente\n\nRenderize uma pessoa HIPER-REALISTA (DSLR 85mm f/1.4, pele com textura e poros reais, NUNCA aspecto plástico):\n   ✅ Genuinamente feliz, transmitindo saúde\n   ✅ Olhar OBRIGATORIAMENTE fixo na câmera (eye contact)\n   ✅ Iluminação Softbox lateral + rim light\n   ✅ Ocupa no máximo 35-40% da lateral do layout\n\n═══════════════════════════════════════════\n🏷️ ESTRUTURA DE OFERTAS E TIPOGRAFIA\n═══════════════════════════════════════════\nLayout com ${style.layout} produto(s) em grade harmônica.\n\nHIERARQUIA TIPOGRÁFICA OBRIGATÓRIA:\n   1️⃣ PREÇO \"POR\" → O MAIOR elemento. Fonte Sans-Serif Black (Montserrat). Mínimo 3x maior que qualquer outro texto.\n   2️⃣ PREÇO \"DE\" → Pequeno, riscado com linha diagonal, tom acinzentado.\n   3️⃣ NOME DO PRODUTO → Bold, limpo, legível.\n   4️⃣ SELO/TAG → Badge flutuante colorido com micro-sombra, como adesivo na foto.\n   5️⃣ CIFRÃO \"R$\" → Sempre 40% menor que os numerais de preço.\n\nDADOS EXATOS (ZERO ERROS PERMITIDOS):\n${productsList}\n\n═══════════════════════════════════════════\n✅ CHECKLIST FINAL\n═══════════════════════════════════════════\n[ ] A logo está visível e destacada no topo?\n[ ] Todos os preços estão 100% corretos?\n[ ] O modelo humano está olhando para a câmera?\n[ ] As fotos reais dos produtos foram utilizadas?\n[ ] Endereço e telefone legíveis no rodapé?\n[ ] A paleta de cores foi respeitada?\n[ ] O design causa impacto visual imediato?\n\nRespire fundo. Renderize agora a obra-prima definitiva.`;\n\nreturn [{\n  json: {\n    org,\n    products,\n    style,\n    aspectRatio,\n    prompt,\n    gemini_api_key: settings.gemini_api_key,\n    serpapi_key: settings.serpapi_key,\n  }\n}];"
+      }
+    },
+    {
+      "id": "n-baixar-logo",
+      "name": "Baixar Logo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.org.logo_url }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "n-upload-logo",
+      "name": "Upload Logo (Gemini Files)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "async function uploadParaGeminiFiles(buffer, mimeType, apiKey, displayName) {\n  const startResp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://generativelanguage.googleapis.com/upload/v1beta/files?key=' + apiKey,\n    headers: {\n      'X-Goog-Upload-Protocol': 'resumable',\n      'X-Goog-Upload-Command': 'start',\n      'X-Goog-Upload-Header-Content-Length': String(buffer.length),\n      'X-Goog-Upload-Header-Content-Type': mimeType,\n      'Content-Type': 'application/json',\n    },\n    body: { file: { display_name: displayName } },\n    json: true,\n    returnFullResponse: true,\n  });\n\n  const uploadUrl = startResp.headers['x-goog-upload-url'] || startResp.headers['X-Goog-Upload-URL'];\n  if (!uploadUrl) {\n    throw new Error('Sem X-Goog-Upload-URL na resposta de start. Headers: ' + JSON.stringify(Object.keys(startResp.headers || {})));\n  }\n\n  const finalizeResp = await this.helpers.httpRequest({\n    method: 'PUT',\n    url: uploadUrl,\n    headers: {\n      'X-Goog-Upload-Offset': '0',\n      'X-Goog-Upload-Command': 'upload, finalize',\n    },\n    body: buffer,\n    json: false,\n    encoding: null,\n  });\n\n  let parsed = finalizeResp;\n  if (Buffer.isBuffer(finalizeResp)) parsed = JSON.parse(finalizeResp.toString('utf8'));\n  else if (typeof finalizeResp === 'string') parsed = JSON.parse(finalizeResp);\n  const fileUri = parsed && parsed.file && parsed.file.uri;\n  if (!fileUri) {\n    throw new Error('Sem file.uri na resposta de finalize: ' + JSON.stringify(parsed).slice(0, 300));\n  }\n  return { fileUri, mimeType: (parsed.file && parsed.file.mimeType) || mimeType };\n}\n\nconst original = $('Formatar Prompt e Dados').first().json;\nconst logoItem = $input.first();\n\nlet logoFileUri = null;\nlet logoMimeType = null;\nlet logoDebugError = null;\nlet logoBufferSha256 = null;\nlet logoBufferLength = null;\n\nif (logoItem.binary && logoItem.binary.data) {\n  try {\n    const buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n    logoBufferLength = buffer.length;\n    logoBufferSha256 = buffer.slice(0, 16).toString('hex') + '...' + buffer.slice(-16).toString('hex');\n    const detectedMime = logoItem.binary.data.mimeType;\n    const mimeType = (detectedMime && detectedMime.startsWith('image/')) ? detectedMime : 'image/png';\n    const uploaded = await uploadParaGeminiFiles.call(this, buffer, mimeType, original.gemini_api_key, 'logo');\n    logoFileUri = uploaded.fileUri;\n    logoMimeType = uploaded.mimeType;\n  } catch (e) {\n    logoDebugError = String(e && e.message || e);\n  }\n} else {\n  logoDebugError = 'sem binary.data no item da Baixar Logo';\n}\n\nreturn [{ json: { ...original, logoFileUri, logoMimeType, logoDebugError, logoBufferSha256, logoBufferLength } }];"
+      }
+    },
+    {
+      "id": "n-separar-produtos",
+      "name": "Separar Produtos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const data = $input.first().json;\nreturn data.products.map((product, index) => ({\n  json: { ...data, currentProduct: product, productIndex: index }\n}));"
+      }
+    },
+    {
+      "id": "n-if-custom",
+      "name": "Tem Imagem Customizada?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-custom-img",
+              "leftValue": "={{ $json.currentProduct.custom_image_base64 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "n-serpapi",
+      "name": "SerpApi Busca Imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        420
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google"
+            },
+            {
+              "name": "tbm",
+              "value": "isch"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.currentProduct.ean }} embalagem medicamento caixa"
+            },
+            {
+              "name": "num",
+              "value": "1"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $json.serpapi_key }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      }
+    },
+    {
+      "id": "n-extrair-url",
+      "name": "Extrair URL da Imagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const original = $('Separar Produtos').item.json;\nconst results = $json.images_results || [];\nconst imageUrl = (results[0] && (results[0].original || results[0].thumbnail)) || null;\nreturn { json: { ...original, productImageUrl: imageUrl } };"
+      }
+    },
+    {
+      "id": "n-baixar-foto-produto",
+      "name": "Baixar Foto Produto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        420
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.productImageUrl }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "n-upload-foto-produto",
+      "name": "Upload Foto Produto (Gemini Files)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "async function uploadParaGeminiFiles(buffer, mimeType, apiKey, displayName) {\n  const startResp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://generativelanguage.googleapis.com/upload/v1beta/files?key=' + apiKey,\n    headers: {\n      'X-Goog-Upload-Protocol': 'resumable',\n      'X-Goog-Upload-Command': 'start',\n      'X-Goog-Upload-Header-Content-Length': String(buffer.length),\n      'X-Goog-Upload-Header-Content-Type': mimeType,\n      'Content-Type': 'application/json',\n    },\n    body: { file: { display_name: displayName } },\n    json: true,\n    returnFullResponse: true,\n  });\n\n  const uploadUrl = startResp.headers['x-goog-upload-url'] || startResp.headers['X-Goog-Upload-URL'];\n  if (!uploadUrl) {\n    throw new Error('Sem X-Goog-Upload-URL na resposta de start. Headers: ' + JSON.stringify(Object.keys(startResp.headers || {})));\n  }\n\n  const finalizeResp = await this.helpers.httpRequest({\n    method: 'PUT',\n    url: uploadUrl,\n    headers: {\n      'X-Goog-Upload-Offset': '0',\n      'X-Goog-Upload-Command': 'upload, finalize',\n    },\n    body: buffer,\n    json: false,\n    encoding: null,\n  });\n\n  let parsed = finalizeResp;\n  if (Buffer.isBuffer(finalizeResp)) parsed = JSON.parse(finalizeResp.toString('utf8'));\n  else if (typeof finalizeResp === 'string') parsed = JSON.parse(finalizeResp);\n  const fileUri = parsed && parsed.file && parsed.file.uri;\n  if (!fileUri) {\n    throw new Error('Sem file.uri na resposta de finalize: ' + JSON.stringify(parsed).slice(0, 300));\n  }\n  return { fileUri, mimeType: (parsed.file && parsed.file.mimeType) || mimeType };\n}\n\nconst original = $('Separar Produtos').item.json;\nconst fotoItem = $input.item;\n\nlet productImageFileUri = null;\nlet productImageMimeType = null;\nlet productImageDebugError = null;\n\ntry {\n  const customDataUri = original.currentProduct.custom_image_base64;\n  if (customDataUri) {\n    const m = /^data:([^;]+);base64,(.+)$/.exec(customDataUri);\n    const mimeType = m ? m[1] : 'image/png';\n    const buffer = Buffer.from(m ? m[2] : customDataUri, 'base64');\n    const uploaded = await uploadParaGeminiFiles.call(this, buffer, mimeType, original.gemini_api_key, 'produto');\n    productImageFileUri = uploaded.fileUri;\n    productImageMimeType = uploaded.mimeType;\n  } else if (fotoItem.binary && fotoItem.binary.data) {\n    const buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n    const detectedMime = fotoItem.binary.data.mimeType;\n    const mimeType = (detectedMime && detectedMime.startsWith('image/')) ? detectedMime : 'image/jpeg';\n    const uploaded = await uploadParaGeminiFiles.call(this, buffer, mimeType, original.gemini_api_key, 'produto');\n    productImageFileUri = uploaded.fileUri;\n    productImageMimeType = uploaded.mimeType;\n  } else {\n    productImageDebugError = 'sem foto customizada nem binary.data da busca';\n  }\n} catch (e) {\n  productImageDebugError = String(e && e.message || e);\n}\n\nreturn { json: { ...original, productImageFileUri, productImageMimeType, productImageDebugError } };"
+      }
+    },
+    {
+      "id": "n-reagrupar",
+      "name": "Reagrupar Todos os Produtos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\n\nconst productImages = items.map(item => ({\n  ean: item.json.currentProduct.ean,\n  fileUri: item.json.productImageFileUri || null,\n  mimeType: item.json.productImageMimeType || null,\n}));\n\nconst base = items[0].json;\nreturn [{\n  json: {\n    org: base.org,\n    products: base.products,\n    style: base.style,\n    aspectRatio: base.aspectRatio,\n    prompt: base.prompt,\n    gemini_api_key: base.gemini_api_key,\n    serpapi_key: base.serpapi_key,\n    logoFileUri: base.logoFileUri,\n    logoBufferSha256: base.logoBufferSha256,\n    logoBufferLength: base.logoBufferLength,\n    logoMimeType: base.logoMimeType,\n    productImages,\n  }\n}];"
+      }
+    },
+    {
+      "id": "n-preparar-imagens",
+      "name": "Preparar Imagens (Base64)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Monta as partes da mensagem pro Gemini referenciando os arquivos já\n// subidos na API de Files (fileData.fileUri), em vez de embutir base64.\nconst data = $input.first().json;\nconst imageParts = [];\n\nif (data.logoFileUri) {\n  imageParts.push({ fileData: { fileUri: data.logoFileUri, mimeType: data.logoMimeType || 'image/png' } });\n}\n\nfor (const img of data.productImages) {\n  if (img.fileUri) {\n    imageParts.push({ fileData: { fileUri: img.fileUri, mimeType: img.mimeType || 'image/jpeg' } });\n  }\n}\n\nreturn [{ json: { ...data, imageParts } }];"
+      }
+    },
+    {
+      "id": "n-gemini",
+      "name": "Gemini — Gerar Encarte",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3000,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $json.gemini_api_key }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {{ $json.imageParts.length > 0 ? $json.imageParts.map(p => JSON.stringify(p)).join(',') + ',' : '' }}\n        { \"text\": {{ JSON.stringify($json.prompt) }} }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"responseModalities\": [\"IMAGE\", \"TEXT\"],\n    \"candidateCount\": 1\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "n-extrair-imagem-gerada",
+      "name": "Extrair Imagem Gerada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3200,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Extrai a imagem gerada pelo Gemini\nconst response = $input.first().json;\n\nconst parts = response?.candidates?.[0]?.content?.parts || [];\nconst imagePart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));\n\nif (!imagePart) {\n  throw new Error('Gemini não retornou nenhuma imagem. Verifique o prompt e as permissões da API.');\n}\n\nconst base64Image = imagePart.inlineData.data;\nconst mimeType = imagePart.inlineData.mimeType;\n\nreturn [{\n  json: {\n    base64Image,\n    mimeType,\n    fileExtension: mimeType.includes('png') ? 'png' : 'jpg',\n  }\n}];"
+      }
+    },
+    {
+      "id": "n-montar-resposta",
+      "name": "Montar Resposta Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3400,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const imageData = $('Extrair Imagem Gerada').item.json;\nconst dataUrl = `data:${imageData.mimeType};base64,${imageData.base64Image}`;\nreturn [{ json: { image_url: dataUrl, success: true } }];"
+      }
+    },
+    {
+      "id": "n-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3600,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validar Sessão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Sessão": {
+      "main": [
+        [
+          {
+            "node": "Buscar Perfil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Perfil": {
+      "main": [
+        [
+          {
+            "node": "Autorizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Autorizar": {
+      "main": [
+        [
+          {
+            "node": "Buscar AI Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar AI Settings": {
+      "main": [
+        [
+          {
+            "node": "Formatar Prompt e Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Prompt e Dados": {
+      "main": [
+        [
+          {
+            "node": "Baixar Logo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar Logo": {
+      "main": [
+        [
+          {
+            "node": "Upload Logo (Gemini Files)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Logo (Gemini Files)": {
+      "main": [
+        [
+          {
+            "node": "Separar Produtos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Produtos": {
+      "main": [
+        [
+          {
+            "node": "Tem Imagem Customizada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem Imagem Customizada?": {
+      "main": [
+        [
+          {
+            "node": "Upload Foto Produto (Gemini Files)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SerpApi Busca Imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpApi Busca Imagem": {
+      "main": [
+        [
+          {
+            "node": "Extrair URL da Imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair URL da Imagem": {
+      "main": [
+        [
+          {
+            "node": "Baixar Foto Produto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar Foto Produto": {
+      "main": [
+        [
+          {
+            "node": "Upload Foto Produto (Gemini Files)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Foto Produto (Gemini Files)": {
+      "main": [
+        [
+          {
+            "node": "Reagrupar Todos os Produtos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reagrupar Todos os Produtos": {
+      "main": [
+        [
+          {
+            "node": "Preparar Imagens (Base64)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Imagens (Base64)": {
+      "main": [
+        [
+          {
+            "node": "Gemini — Gerar Encarte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini — Gerar Encarte": {
+      "main": [
+        [
+          {
+            "node": "Extrair Imagem Gerada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Imagem Gerada": {
+      "main": [
+        [
+          {
+            "node": "Montar Resposta Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Resposta Final": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "activeVersionId": "cb3ec5bb-a828-456d-9642-3a7114345c70",
+  "triggerCount": 1,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-08-17T13:35:49.948Z",
+    "createdAt": "2026-08-17T13:35:49.948Z",
+    "versionId": "cb3ec5bb-a828-456d-9642-3a7114345c70",
+    "workflowId": "782u22eQ6Mv7YiYE",
+    "nodes": [
+      {
+        "id": "n-webhook",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -200,
+          300
+        ],
+        "webhookId": "balconista-encarte-hook",
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "imagensia",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "n-validar-sessao",
+        "name": "Validar Sessão",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://wejzydpxyghddjekokgd.supabase.co/auth/v1/user",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "__SUPABASE_ANON_KEY__"
+              },
+              {
+                "name": "Authorization",
+                "value": "={{ $json.headers.authorization }}"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "n-buscar-perfil",
+        "name": "Buscar Perfil",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          200,
+          300
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://wejzydpxyghddjekokgd.supabase.co/rest/v1/users?auth_id=eq.{{ $json.id }}&select=organization_id,role",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "__SUPABASE_SERVICE_ROLE_KEY__"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer __SUPABASE_SERVICE_ROLE_KEY__"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "n-autorizar",
+        "name": "Autorizar",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const profile = Array.isArray($input.first().json) ? $input.first().json[0] : $input.first().json;\nconst body = $('Webhook').item.json.body;\nif (!profile) throw new Error('Sessão inválida');\nif (profile.role !== 'super_admin' && String(profile.organization_id) !== String(body.org.id)) {\n  throw new Error('Sem permissão para gerar encarte para essa organização');\n}\nreturn [{ json: body }];"
+        }
+      },
+      {
+        "id": "n-buscar-ai-settings",
+        "name": "Buscar AI Settings",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          600,
+          300
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://wejzydpxyghddjekokgd.supabase.co/rest/v1/ai_settings?organization_id=eq.{{ $json.org.id }}&select=gemini_api_key,serpapi_key",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "__SUPABASE_SERVICE_ROLE_KEY__"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer __SUPABASE_SERVICE_ROLE_KEY__"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "n-formatar-prompt",
+        "name": "Formatar Prompt e Dados",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Extrai dados do payload autorizado e monta o prompt pro Gemini\nconst body = $('Autorizar').item.json;\nconst settingsArr = $input.first().json;\nconst settings = Array.isArray(settingsArr) ? settingsArr[0] : settingsArr;\nif (!settings || !settings.gemini_api_key || !settings.serpapi_key) {\n  throw new Error('Configure as chaves do Gemini e SerpApi em Configurações de IA antes de gerar encartes.');\n}\n\nconst org = body.org;\nconst products = body.products || [];\nconst style = body.style;\n\nconst productsList = products.map((p, i) => {\n  return `Produto ${i + 1}:\n  - Nome: ${p.name}\n  - EAN: ${p.ean}\n  - Preço DE (riscado): R$ ${p.price_from}\n  - Preço POR (gigante/destaque): R$ ${p.price_to}\n  - Selo/Tag: ${p.tag || 'Oferta'}\n  - Texto extra: ${p.extra_text || ''}`;\n}).join('\\n\\n');\n\nconst aspectRatio = style.format === 'story' ? '9:16' : '1:1';\n\nconst prompt = `Você é um Diretor de Arte Sênior premiado (Cannes Lions, D&AD), Estrategista de Marketing Visual e Mestre em Tipografia de Varejo Premium. Você domina composição editorial de revistas como Vogue, renderização 3D (Octane/Unreal Engine 5) e fotografia publicitária de altíssimo padrão.\n\n═══════════════════════════════════════════\n⚠️ INTEGRAÇÃO MULTIMODAL — ASSETS REAIS\n═══════════════════════════════════════════\nJunto com este prompt, recebo em anexo:\n  📌 Anexo 1 → LOGOMARCA oficial da farmácia (PNG com fundo transparente)\n  📌 Anexos seguintes → FOTOGRAFIAS REAIS dos produtos (via SerpApi/código de barras ou upload manual)\n\n🚫 REGRA INVIOLÁVEL DE INTEGRIDADE VISUAL:\nÉ TERMINANTEMENTE PROIBIDO inventar, desenhar ou gerar do zero qualquer embalagem, frasco, caixa ou rótulo de medicamento. Você DEVE usar EXCLUSIVAMENTE as fotos reais anexadas. Aplique \"studio relighting\", remova fundos sujos, adicione sombras suaves e reflexos sutis para integrá-las perfeitamente à cena 3D.\n\n═══════════════════════════════════════════\n🎯 MISSÃO\n═══════════════════════════════════════════\nRenderizar um encarte publicitário de ofertas ESPETACULAR, digno de uma agência de publicidade premiada, com qualidade de catálogo de luxo. O resultado deve fazer qualquer pessoa parar o scroll e olhar.\n\n═══════════════════════════════════════════\n🏪 IDENTIDADE DA FARMÁCIA\n═══════════════════════════════════════════\nMarca: \"${org.name}\"\nTom de voz da campanha: \"${org.tone}\"\nTema da campanha: \"${style.theme || ''}\"\n\n🔷 LOGO (TOPO — CABEÇALHO):\nA logomarca anexada DEVE aparecer com destaque absoluto no topo do encarte — centralizada, grande, nítida. Aplique um leve glow sutil da cor da paleta para destacá-la do fundo sem poluir.\n\n🔷 RODAPÉ — BLOCO DE CONTATO:\nNa base inferior, construa uma barra elegante em vidro translúcido (glassmorphism) contendo:\n   📍 \"${org.address}\"\n   ☎️ \"${org.phone}\"${style.validity ? `\n   📅 Válido até ${style.validity}` : ''}\n\n═══════════════════════════════════════════\n🎨 DIRETRIZES DE DESIGN PREMIUM\n═══════════════════════════════════════════\n1. PROPORÇÃO EXATA: ${aspectRatio} — Qualidade 8K fotorrealista.\n2. PALETA E ATMOSFERA: Cor de destaque/sotaque: \"${style.palette}\" — use-a com MODERAÇÃO em elementos-chave (badges, tipografia de preço, detalhes de luz), combinando com tons neutros e gradientes complementares escuros/claros. Estilo: \"${style.style}\".\n   - O fundo NUNCA deve ser branco chapado NEM ser pintado inteiramente da cor de destaque — a cor de destaque é um ACENTO, não o preenchimento da cena toda.\n   - Crie gradientes orgânicos multicamada usando variações sutis (tints/shades) da cor de destaque combinadas com neutros (cinza-chumbo, off-white, preto).\n   - Adicione formas geométricas abstratas sutis e desfocadas para criar dimensão.\n3. TEXTURAS PREMIUM OBRIGATÓRIAS (combine pelo menos 3):\n   - Glassmorphism (painéis de vidro fosco semitransparente)\n   - Grain/Noise sutil (2-4%) para textura fotográfica\n   - Bokeh luminoso desfocado no plano de fundo\n   - Partículas brilhantes microscópicas flutuando\n   - Rim lighting cinematográfico nas bordas dos produtos\n   - Reflexos de luz anamórfica discretos\n4. MICRO-ELEMENTOS DE SAÚDE (SUTIS): silhuetas translúcidas de moléculas, folhas orgânicas ou ondas de pulso cardíaco — extremamente sutis, jamais competindo com os produtos.\n\n═══════════════════════════════════════════\n👤 MODELO HUMANO — CONEXÃO EMOCIONAL\n═══════════════════════════════════════════\nAnalize os produtos e deduza o público-alvo:\n   • Fraldas/Pomadas → Mãe jovem carinhosa\n   • Whey/Creatina → Atleta/Fitness vibrante\n   • Colágeno/Skincare → Mulher radiante 30-50 anos\n   • Pressão/Glicemia → Idoso ativo e saudável\n   • Vitaminas infantis → Criança feliz com os pais\n   • Genéricos → Farmacêutica(o) profissional sorridente\n\nRenderize uma pessoa HIPER-REALISTA (DSLR 85mm f/1.4, pele com textura e poros reais, NUNCA aspecto plástico):\n   ✅ Genuinamente feliz, transmitindo saúde\n   ✅ Olhar OBRIGATORIAMENTE fixo na câmera (eye contact)\n   ✅ Iluminação Softbox lateral + rim light\n   ✅ Ocupa no máximo 35-40% da lateral do layout\n\n═══════════════════════════════════════════\n🏷️ ESTRUTURA DE OFERTAS E TIPOGRAFIA\n═══════════════════════════════════════════\nLayout com ${style.layout} produto(s) em grade harmônica.\n\nHIERARQUIA TIPOGRÁFICA OBRIGATÓRIA:\n   1️⃣ PREÇO \"POR\" → O MAIOR elemento. Fonte Sans-Serif Black (Montserrat). Mínimo 3x maior que qualquer outro texto.\n   2️⃣ PREÇO \"DE\" → Pequeno, riscado com linha diagonal, tom acinzentado.\n   3️⃣ NOME DO PRODUTO → Bold, limpo, legível.\n   4️⃣ SELO/TAG → Badge flutuante colorido com micro-sombra, como adesivo na foto.\n   5️⃣ CIFRÃO \"R$\" → Sempre 40% menor que os numerais de preço.\n\nDADOS EXATOS (ZERO ERROS PERMITIDOS):\n${productsList}\n\n═══════════════════════════════════════════\n✅ CHECKLIST FINAL\n═══════════════════════════════════════════\n[ ] A logo está visível e destacada no topo?\n[ ] Todos os preços estão 100% corretos?\n[ ] O modelo humano está olhando para a câmera?\n[ ] As fotos reais dos produtos foram utilizadas?\n[ ] Endereço e telefone legíveis no rodapé?\n[ ] A paleta de cores foi respeitada?\n[ ] O design causa impacto visual imediato?\n\nRespire fundo. Renderize agora a obra-prima definitiva.`;\n\nreturn [{\n  json: {\n    org,\n    products,\n    style,\n    aspectRatio,\n    prompt,\n    gemini_api_key: settings.gemini_api_key,\n    serpapi_key: settings.serpapi_key,\n  }\n}];"
+        }
+      },
+      {
+        "id": "n-baixar-logo",
+        "name": "Baixar Logo",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1000,
+          300
+        ],
+        "onError": "continueRegularOutput",
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $json.org.logo_url }}",
+          "options": {
+            "timeout": 15000,
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "n-upload-logo",
+        "name": "Upload Logo (Gemini Files)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "async function uploadParaGeminiFiles(buffer, mimeType, apiKey, displayName) {\n  const startResp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://generativelanguage.googleapis.com/upload/v1beta/files?key=' + apiKey,\n    headers: {\n      'X-Goog-Upload-Protocol': 'resumable',\n      'X-Goog-Upload-Command': 'start',\n      'X-Goog-Upload-Header-Content-Length': String(buffer.length),\n      'X-Goog-Upload-Header-Content-Type': mimeType,\n      'Content-Type': 'application/json',\n    },\n    body: { file: { display_name: displayName } },\n    json: true,\n    returnFullResponse: true,\n  });\n\n  const uploadUrl = startResp.headers['x-goog-upload-url'] || startResp.headers['X-Goog-Upload-URL'];\n  if (!uploadUrl) {\n    throw new Error('Sem X-Goog-Upload-URL na resposta de start. Headers: ' + JSON.stringify(Object.keys(startResp.headers || {})));\n  }\n\n  const finalizeResp = await this.helpers.httpRequest({\n    method: 'PUT',\n    url: uploadUrl,\n    headers: {\n      'X-Goog-Upload-Offset': '0',\n      'X-Goog-Upload-Command': 'upload, finalize',\n    },\n    body: buffer,\n    json: false,\n    encoding: null,\n  });\n\n  let parsed = finalizeResp;\n  if (Buffer.isBuffer(finalizeResp)) parsed = JSON.parse(finalizeResp.toString('utf8'));\n  else if (typeof finalizeResp === 'string') parsed = JSON.parse(finalizeResp);\n  const fileUri = parsed && parsed.file && parsed.file.uri;\n  if (!fileUri) {\n    throw new Error('Sem file.uri na resposta de finalize: ' + JSON.stringify(parsed).slice(0, 300));\n  }\n  return { fileUri, mimeType: (parsed.file && parsed.file.mimeType) || mimeType };\n}\n\nconst original = $('Formatar Prompt e Dados').first().json;\nconst logoItem = $input.first();\n\nlet logoFileUri = null;\nlet logoMimeType = null;\nlet logoDebugError = null;\nlet logoBufferSha256 = null;\nlet logoBufferLength = null;\n\nif (logoItem.binary && logoItem.binary.data) {\n  try {\n    const buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n    logoBufferLength = buffer.length;\n    logoBufferSha256 = buffer.slice(0, 16).toString('hex') + '...' + buffer.slice(-16).toString('hex');\n    const detectedMime = logoItem.binary.data.mimeType;\n    const mimeType = (detectedMime && detectedMime.startsWith('image/')) ? detectedMime : 'image/png';\n    const uploaded = await uploadParaGeminiFiles.call(this, buffer, mimeType, original.gemini_api_key, 'logo');\n    logoFileUri = uploaded.fileUri;\n    logoMimeType = uploaded.mimeType;\n  } catch (e) {\n    logoDebugError = String(e && e.message || e);\n  }\n} else {\n  logoDebugError = 'sem binary.data no item da Baixar Logo';\n}\n\nreturn [{ json: { ...original, logoFileUri, logoMimeType, logoDebugError, logoBufferSha256, logoBufferLength } }];"
+        }
+      },
+      {
+        "id": "n-separar-produtos",
+        "name": "Separar Produtos",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1400,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const data = $input.first().json;\nreturn data.products.map((product, index) => ({\n  json: { ...data, currentProduct: product, productIndex: index }\n}));"
+        }
+      },
+      {
+        "id": "n-if-custom",
+        "name": "Tem Imagem Customizada?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1600,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "cond-custom-img",
+                "leftValue": "={{ $json.currentProduct.custom_image_base64 }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "n-serpapi",
+        "name": "SerpApi Busca Imagem",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1800,
+          420
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "https://serpapi.com/search.json",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "engine",
+                "value": "google"
+              },
+              {
+                "name": "tbm",
+                "value": "isch"
+              },
+              {
+                "name": "q",
+                "value": "={{ $json.currentProduct.ean }} embalagem medicamento caixa"
+              },
+              {
+                "name": "num",
+                "value": "1"
+              },
+              {
+                "name": "api_key",
+                "value": "={{ $json.serpapi_key }}"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 15000
+          }
+        }
+      },
+      {
+        "id": "n-extrair-url",
+        "name": "Extrair URL da Imagem",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2000,
+          420
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const original = $('Separar Produtos').item.json;\nconst results = $json.images_results || [];\nconst imageUrl = (results[0] && (results[0].original || results[0].thumbnail)) || null;\nreturn { json: { ...original, productImageUrl: imageUrl } };"
+        }
+      },
+      {
+        "id": "n-baixar-foto-produto",
+        "name": "Baixar Foto Produto",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2200,
+          420
+        ],
+        "onError": "continueRegularOutput",
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $json.productImageUrl }}",
+          "options": {
+            "timeout": 15000,
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "n-upload-foto-produto",
+        "name": "Upload Foto Produto (Gemini Files)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2400,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "async function uploadParaGeminiFiles(buffer, mimeType, apiKey, displayName) {\n  const startResp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://generativelanguage.googleapis.com/upload/v1beta/files?key=' + apiKey,\n    headers: {\n      'X-Goog-Upload-Protocol': 'resumable',\n      'X-Goog-Upload-Command': 'start',\n      'X-Goog-Upload-Header-Content-Length': String(buffer.length),\n      'X-Goog-Upload-Header-Content-Type': mimeType,\n      'Content-Type': 'application/json',\n    },\n    body: { file: { display_name: displayName } },\n    json: true,\n    returnFullResponse: true,\n  });\n\n  const uploadUrl = startResp.headers['x-goog-upload-url'] || startResp.headers['X-Goog-Upload-URL'];\n  if (!uploadUrl) {\n    throw new Error('Sem X-Goog-Upload-URL na resposta de start. Headers: ' + JSON.stringify(Object.keys(startResp.headers || {})));\n  }\n\n  const finalizeResp = await this.helpers.httpRequest({\n    method: 'PUT',\n    url: uploadUrl,\n    headers: {\n      'X-Goog-Upload-Offset': '0',\n      'X-Goog-Upload-Command': 'upload, finalize',\n    },\n    body: buffer,\n    json: false,\n    encoding: null,\n  });\n\n  let parsed = finalizeResp;\n  if (Buffer.isBuffer(finalizeResp)) parsed = JSON.parse(finalizeResp.toString('utf8'));\n  else if (typeof finalizeResp === 'string') parsed = JSON.parse(finalizeResp);\n  const fileUri = parsed && parsed.file && parsed.file.uri;\n  if (!fileUri) {\n    throw new Error('Sem file.uri na resposta de finalize: ' + JSON.stringify(parsed).slice(0, 300));\n  }\n  return { fileUri, mimeType: (parsed.file && parsed.file.mimeType) || mimeType };\n}\n\nconst original = $('Separar Produtos').item.json;\nconst fotoItem = $input.item;\n\nlet productImageFileUri = null;\nlet productImageMimeType = null;\nlet productImageDebugError = null;\n\ntry {\n  const customDataUri = original.currentProduct.custom_image_base64;\n  if (customDataUri) {\n    const m = /^data:([^;]+);base64,(.+)$/.exec(customDataUri);\n    const mimeType = m ? m[1] : 'image/png';\n    const buffer = Buffer.from(m ? m[2] : customDataUri, 'base64');\n    const uploaded = await uploadParaGeminiFiles.call(this, buffer, mimeType, original.gemini_api_key, 'produto');\n    productImageFileUri = uploaded.fileUri;\n    productImageMimeType = uploaded.mimeType;\n  } else if (fotoItem.binary && fotoItem.binary.data) {\n    const buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n    const detectedMime = fotoItem.binary.data.mimeType;\n    const mimeType = (detectedMime && detectedMime.startsWith('image/')) ? detectedMime : 'image/jpeg';\n    const uploaded = await uploadParaGeminiFiles.call(this, buffer, mimeType, original.gemini_api_key, 'produto');\n    productImageFileUri = uploaded.fileUri;\n    productImageMimeType = uploaded.mimeType;\n  } else {\n    productImageDebugError = 'sem foto customizada nem binary.data da busca';\n  }\n} catch (e) {\n  productImageDebugError = String(e && e.message || e);\n}\n\nreturn { json: { ...original, productImageFileUri, productImageMimeType, productImageDebugError } };"
+        }
+      },
+      {
+        "id": "n-reagrupar",
+        "name": "Reagrupar Todos os Produtos",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2600,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const items = $input.all();\n\nconst productImages = items.map(item => ({\n  ean: item.json.currentProduct.ean,\n  fileUri: item.json.productImageFileUri || null,\n  mimeType: item.json.productImageMimeType || null,\n}));\n\nconst base = items[0].json;\nreturn [{\n  json: {\n    org: base.org,\n    products: base.products,\n    style: base.style,\n    aspectRatio: base.aspectRatio,\n    prompt: base.prompt,\n    gemini_api_key: base.gemini_api_key,\n    serpapi_key: base.serpapi_key,\n    logoFileUri: base.logoFileUri,\n    logoBufferSha256: base.logoBufferSha256,\n    logoBufferLength: base.logoBufferLength,\n    logoMimeType: base.logoMimeType,\n    productImages,\n  }\n}];"
+        }
+      },
+      {
+        "id": "n-preparar-imagens",
+        "name": "Preparar Imagens (Base64)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2800,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Monta as partes da mensagem pro Gemini referenciando os arquivos já\n// subidos na API de Files (fileData.fileUri), em vez de embutir base64.\nconst data = $input.first().json;\nconst imageParts = [];\n\nif (data.logoFileUri) {\n  imageParts.push({ fileData: { fileUri: data.logoFileUri, mimeType: data.logoMimeType || 'image/png' } });\n}\n\nfor (const img of data.productImages) {\n  if (img.fileUri) {\n    imageParts.push({ fileData: { fileUri: img.fileUri, mimeType: img.mimeType || 'image/jpeg' } });\n  }\n}\n\nreturn [{ json: { ...data, imageParts } }];"
+        }
+      },
+      {
+        "id": "n-gemini",
+        "name": "Gemini — Gerar Encarte",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3000,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "={{ $json.gemini_api_key }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {{ $json.imageParts.length > 0 ? $json.imageParts.map(p => JSON.stringify(p)).join(',') + ',' : '' }}\n        { \"text\": {{ JSON.stringify($json.prompt) }} }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"responseModalities\": [\"IMAGE\", \"TEXT\"],\n    \"candidateCount\": 1\n  }\n}",
+          "options": {
+            "timeout": 120000
+          }
+        }
+      },
+      {
+        "id": "n-extrair-imagem-gerada",
+        "name": "Extrair Imagem Gerada",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3200,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "// Extrai a imagem gerada pelo Gemini\nconst response = $input.first().json;\n\nconst parts = response?.candidates?.[0]?.content?.parts || [];\nconst imagePart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));\n\nif (!imagePart) {\n  throw new Error('Gemini não retornou nenhuma imagem. Verifique o prompt e as permissões da API.');\n}\n\nconst base64Image = imagePart.inlineData.data;\nconst mimeType = imagePart.inlineData.mimeType;\n\nreturn [{\n  json: {\n    base64Image,\n    mimeType,\n    fileExtension: mimeType.includes('png') ? 'png' : 'jpg',\n  }\n}];"
+        }
+      },
+      {
+        "id": "n-montar-resposta",
+        "name": "Montar Resposta Final",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3400,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const imageData = $('Extrair Imagem Gerada').item.json;\nconst dataUrl = `data:${imageData.mimeType};base64,${imageData.base64Image}`;\nreturn [{ json: { image_url: dataUrl, success: true } }];"
+        }
+      },
+      {
+        "id": "n-respond",
+        "name": "Respond to Webhook",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          3600,
+          300
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Validar Sessão",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validar Sessão": {
+        "main": [
+          [
+            {
+              "node": "Buscar Perfil",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar Perfil": {
+        "main": [
+          [
+            {
+              "node": "Autorizar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Autorizar": {
+        "main": [
+          [
+            {
+              "node": "Buscar AI Settings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar AI Settings": {
+        "main": [
+          [
+            {
+              "node": "Formatar Prompt e Dados",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Formatar Prompt e Dados": {
+        "main": [
+          [
+            {
+              "node": "Baixar Logo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Baixar Logo": {
+        "main": [
+          [
+            {
+              "node": "Upload Logo (Gemini Files)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload Logo (Gemini Files)": {
+        "main": [
+          [
+            {
+              "node": "Separar Produtos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Separar Produtos": {
+        "main": [
+          [
+            {
+              "node": "Tem Imagem Customizada?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tem Imagem Customizada?": {
+        "main": [
+          [
+            {
+              "node": "Upload Foto Produto (Gemini Files)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "SerpApi Busca Imagem",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SerpApi Busca Imagem": {
+        "main": [
+          [
+            {
+              "node": "Extrair URL da Imagem",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extrair URL da Imagem": {
+        "main": [
+          [
+            {
+              "node": "Baixar Foto Produto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Baixar Foto Produto": {
+        "main": [
+          [
+            {
+              "node": "Upload Foto Produto (Gemini Files)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload Foto Produto (Gemini Files)": {
+        "main": [
+          [
+            {
+              "node": "Reagrupar Todos os Produtos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Reagrupar Todos os Produtos": {
+        "main": [
+          [
+            {
+              "node": "Preparar Imagens (Base64)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preparar Imagens (Base64)": {
+        "main": [
+          [
+            {
+              "node": "Gemini — Gerar Encarte",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini — Gerar Encarte": {
+        "main": [
+          [
+            {
+              "node": "Extrair Imagem Gerada",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extrair Imagem Gerada": {
+        "main": [
+          [
+            {
+              "node": "Montar Resposta Final",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Montar Resposta Final": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Dione Daldegan",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-08-17T13:35:49.991Z",
+        "id": 537,
+        "workflowId": "782u22eQ6Mv7YiYE",
+        "versionId": "cb3ec5bb-a828-456d-9642-3a7114345c70",
+        "event": "deactivated",
+        "userId": "ff76ea64-abf2-4246-b6d1-01853c2cbf03"
+      },
+      {
+        "createdAt": "2026-08-17T13:35:50.010Z",
+        "id": 538,
+        "workflowId": "782u22eQ6Mv7YiYE",
+        "versionId": "cb3ec5bb-a828-456d-9642-3a7114345c70",
+        "event": "activated",
+        "userId": "ff76ea64-abf2-4246-b6d1-01853c2cbf03"
+      }
+    ]
+  }
+}
